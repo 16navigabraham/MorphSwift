@@ -13,6 +13,7 @@ const SHELL = [
   './assets/css/components.css',
   './assets/css/responsive.css',
   './assets/css/morph-brand.css',
+  './assets/css/fit-screen.css',
   './assets/icons/morph-logo.svg',
   './assets/icons/morph-icon.svg',
   './assets/icons/logo.svg',

@@ -8,6 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="assets/css/responsive.css" />
 <link rel="stylesheet" href="assets/css/morph-brand.css" />
+<link rel="stylesheet" href="assets/css/fit-screen.css" />
 <link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml" />
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -238,14 +239,10 @@
   /* Transactions list */
   .tx-list {
     flex: 1;
-    overflow-y: auto;
+    min-height: 0;
+    overflow: hidden;
     padding: 0 20px;
-    -webkit-overflow-scrolling: touch;
   }
-
-  .tx-list::-webkit-scrollbar { width: 4px; }
-  .tx-list::-webkit-scrollbar-track { background: transparent; }
-  .tx-list::-webkit-scrollbar-thumb { background: var(--muted-2); border-radius: 2px; }
 
   .day-group-header {
     display: flex;

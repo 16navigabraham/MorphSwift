@@ -8,6 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="assets/css/responsive.css" />
 <link rel="stylesheet" href="assets/css/morph-brand.css" />
+<link rel="stylesheet" href="assets/css/fit-screen.css" />
 <link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml" />
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -43,47 +44,25 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 14px 20px;
+    padding: 10px 16px;
     border-bottom: 1px solid var(--border);
     flex-shrink: 0;
   }
 
   .topbar-label {
-    font-size: 11px;
+    font-size: 10px;
     color: var(--muted);
     letter-spacing: 0.08em;
     text-transform: uppercase;
   }
 
-  .sender-main {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 24px 20px;
-    text-align: center;
-    min-height: 0;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .check-circle {
-    width: clamp(72px, 18vmin, 96px);
-    height: clamp(72px, 18vmin, 96px);
-    border-radius: 50%;
-    background: var(--green-dim);
-    border: 2px solid var(--green);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: clamp(16px, 4vmin, 28px);
-    animation: popIn 0.5s cubic-bezier(0.17, 0.89, 0.32, 1.3) both;
-  }
-
   @keyframes popIn {
     from { transform: scale(0.5); opacity: 0; }
     to { transform: scale(1); opacity: 1; }
+  }
+
+  @keyframes drawCheck {
+    to { stroke-dashoffset: 0; }
   }
 
   .check-svg path {
@@ -92,83 +71,9 @@
     animation: drawCheck 0.5s 0.3s ease forwards;
   }
 
-  @keyframes drawCheck {
-    to { stroke-dashoffset: 0; }
-  }
-
-  .sender-title {
-    font-family: var(--display);
-    font-size: clamp(26px, 7vw, 36px);
-    font-weight: 800;
-    letter-spacing: -0.8px;
-    line-height: 1.1;
-    margin-bottom: 10px;
-  }
-
-  .sender-title span { color: var(--green); }
-
-  .sender-sub {
-    font-size: clamp(13px, 3.5vw, 15px);
-    color: var(--muted);
-    line-height: 1.6;
-    max-width: 320px;
-    margin-bottom: clamp(20px, 5vmin, 32px);
-  }
-
-  .sender-sub strong {
-    color: var(--text);
-    font-weight: 500;
-  }
-
-  .receipt-card {
-    width: 100%;
-    max-width: 360px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 18px 16px;
-    margin-bottom: 20px;
-    text-align: left;
-  }
-
-  .receipt-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 12px;
-    padding: 9px 0;
-    font-size: 13px;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .receipt-row:last-child { border-bottom: none; }
-
-  .receipt-key { color: var(--muted); flex-shrink: 0; }
-
-  .receipt-val {
-    font-weight: 500;
-    text-align: right;
-    word-break: break-all;
-  }
-
-  .receipt-val.green { color: var(--green); }
-
-  .receipt-val.mono { font-size: 11px; }
-
-  .status-banner {
-    width: 100%;
-    max-width: 360px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 12px 14px;
-    background: var(--amber-dim);
-    border: 1px solid rgba(27, 229, 0, 0.25);
-    border-radius: 10px;
-    font-size: 12px;
-    color: var(--green);
-    margin-bottom: 20px;
-    text-align: left;
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
   }
 
   .status-dot {
@@ -180,54 +85,8 @@
     animation: pulse 2s ease infinite;
   }
 
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.35; }
-  }
-
-  .actions {
-    width: 100%;
-    max-width: 360px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    flex-shrink: 0;
-  }
-
-  .btn-primary {
-    width: 100%;
-    background: var(--amber);
-    border: none;
-    border-radius: 12px;
-    padding: 15px;
-    color: #0E0E11;
-    font-family: var(--display);
-    font-size: 16px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: opacity 0.2s, transform 0.1s;
-  }
-
-  .btn-primary:hover { opacity: 0.92; }
-  .btn-primary:active { transform: scale(0.99); }
-
-  .btn-ghost {
-    width: 100%;
-    background: transparent;
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 13px;
-    color: var(--muted);
-    font-family: var(--mono);
-    font-size: 13px;
-    cursor: pointer;
-    transition: border-color 0.15s, color 0.15s;
-  }
-
-  .btn-ghost:hover {
-    border-color: rgba(255,255,255,0.15);
-    color: var(--text);
-  }
+  .receipt-val.green { color: var(--green); }
+  .receipt-val.mono { font-size: 11px; }
 </style>
 </head>
 <body class="app-shell page-sender">
@@ -238,55 +97,76 @@
   </div>
 
   <main class="sender-main">
-    <div class="check-circle">
-      <svg class="check-svg" width="40" height="40" viewBox="0 0 40 40" fill="none" aria-hidden="true">
-        <path d="M10 21L17 28L30 13" stroke="#1BE500" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
+    <div class="sender-hero">
+      <div class="check-circle">
+        <svg class="check-svg" width="40" height="40" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+          <path d="M10 21L17 28L30 13" stroke="#1BE500" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <h1 class="sender-title">Payment <span>Sent</span></h1>
+      <p class="sender-sub" id="sender-sub">
+        Your transfer was broadcast to <strong>Morph Network</strong>.
+      </p>
     </div>
 
-    <h1 class="sender-title">Payment <span>Sent</span></h1>
-    <p class="sender-sub" id="sender-sub">
-      Your transfer was broadcast to <strong>Morph Network</strong> and is being confirmed.
-    </p>
+    <div class="sender-stack">
+      <div class="status-banner">
+        <span class="status-dot"></span>
+        <span id="status-banner-text">Confirmed on Morph · settlement complete</span>
+      </div>
 
-    <div class="status-banner">
-      <span class="status-dot"></span>
-      <span id="status-banner-text">Confirmed on Morph · settlement complete</span>
-    </div>
+      <label class="narration-block" for="narration">
+        <span class="narration-label">Payment narration</span>
+        <textarea
+          id="narration"
+          class="narration-input"
+          rows="2"
+          maxlength="140"
+          placeholder="e.g. Invoice #1042, March supplies…"
+        ></textarea>
+        <span class="narration-hint">Visible to the merchant on Morph (optional, max 140 chars)</span>
+      </label>
 
-    <div class="receipt-card">
-      <div class="receipt-row">
-        <span class="receipt-key">You sent</span>
-        <span class="receipt-val green" id="r-amount">—</span>
-      </div>
-      <div class="receipt-row">
-        <span class="receipt-key">To</span>
-        <span class="receipt-val" id="r-merchant">—</span>
-      </div>
-      <div class="receipt-row">
-        <span class="receipt-key">Fiat equivalent</span>
-        <span class="receipt-val" id="r-fiat">—</span>
-      </div>
-      <div class="receipt-row">
-        <span class="receipt-key">Network</span>
-        <span class="receipt-val">Morph</span>
-      </div>
-      <div class="receipt-row">
-        <span class="receipt-key">Token</span>
-        <span class="receipt-val" id="r-token">USDC</span>
-      </div>
-      <div class="receipt-row">
-        <span class="receipt-key">Tx hash</span>
-        <span class="receipt-val mono" id="r-tx">—</span>
-      </div>
-      <div class="receipt-row">
-        <span class="receipt-key">Time</span>
-        <span class="receipt-val" id="r-time">—</span>
+      <div class="receipt-card">
+        <div class="receipt-scroll">
+          <div class="receipt-row">
+            <span class="receipt-key">You sent</span>
+            <span class="receipt-val green" id="r-amount">—</span>
+          </div>
+          <div class="receipt-row">
+            <span class="receipt-key">To</span>
+            <span class="receipt-val" id="r-merchant">—</span>
+          </div>
+          <div class="receipt-row" id="r-narration-row" style="display:none">
+            <span class="receipt-key">Note</span>
+            <span class="receipt-val" id="r-narration">—</span>
+          </div>
+          <div class="receipt-row" id="r-fiat-row">
+            <span class="receipt-key">Fiat equivalent</span>
+            <span class="receipt-val" id="r-fiat">—</span>
+          </div>
+          <div class="receipt-row">
+            <span class="receipt-key">Network</span>
+            <span class="receipt-val">Morph</span>
+          </div>
+          <div class="receipt-row">
+            <span class="receipt-key">Token</span>
+            <span class="receipt-val" id="r-token">USDC</span>
+          </div>
+          <div class="receipt-row">
+            <span class="receipt-key">Tx hash</span>
+            <span class="receipt-val mono" id="r-tx">—</span>
+          </div>
+          <div class="receipt-row" id="r-time-row">
+            <span class="receipt-key">Time</span>
+            <span class="receipt-val" id="r-time">—</span>
+          </div>
+        </div>
       </div>
     </div>
 
     <div class="actions">
-      <button type="button" class="btn-primary" onclick="copyReceipt()">Copy receipt</button>
+      <button type="button" class="btn-primary" onclick="saveAndCopy()">Save &amp; copy receipt</button>
       <button type="button" class="btn-ghost" onclick="closeReceipt()">Done</button>
     </div>
   </main>
@@ -301,6 +181,7 @@
 
 <script>
   const syms = { PHP: '₱', USD: '$', NGN: '₦', SGD: 'S$', MYR: 'RM' };
+  const narrationEl = document.getElementById('narration');
 
   function loadReceipt() {
     const params = new URLSearchParams(window.location.search);
@@ -319,6 +200,7 @@
       fiatCurrency: params.get('fiatCurrency') ?? data?.fiatCurrency ?? 'PHP',
       txHash: params.get('tx') ?? params.get('txHash') ?? data?.txHash ?? '',
       timestamp: params.get('timestamp') ?? data?.timestamp ?? new Date().toISOString(),
+      narration: params.get('narration') ?? data?.narration ?? '',
       network: 'Morph',
       status: params.get('status') ?? data?.status ?? 'sent',
     };
@@ -334,9 +216,11 @@
     document.getElementById('r-token').textContent = merged.token;
     document.getElementById('r-tx').textContent = merged.txHash || 'Pending…';
     document.getElementById('r-time').textContent = new Date(merged.timestamp).toLocaleString();
+    narrationEl.value = merged.narration || '';
+    updateNarrationDisplay();
 
     document.getElementById('sender-sub').innerHTML =
-      `You paid <strong>${merged.amount} ${merged.token}</strong> to <strong>${document.getElementById('r-merchant').textContent}</strong> on Morph Network.`;
+      `You paid <strong>${merged.amount} ${merged.token}</strong> to <strong>${document.getElementById('r-merchant').textContent}</strong> on Morph.`;
 
     if (merged.status === 'pending') {
       document.getElementById('status-banner-text').textContent = 'Submitted · awaiting block confirmation on Morph';
@@ -347,23 +231,63 @@
 
   let receiptData = loadReceipt();
 
-  function copyReceipt() {
-    const text = [
+  function persistReceipt() {
+    const narration = narrationEl.value.trim();
+    receiptData.narration = narration;
+    try {
+      const stored = JSON.parse(sessionStorage.getItem('morphswift-payer-receipt') || '{}');
+      sessionStorage.setItem('morphswift-payer-receipt', JSON.stringify({
+        ...stored,
+        ...receiptData,
+        narration,
+      }));
+    } catch {
+      sessionStorage.setItem('morphswift-payer-receipt', JSON.stringify({ ...receiptData, narration }));
+    }
+    updateNarrationDisplay();
+  }
+
+  function updateNarrationDisplay() {
+    const note = narrationEl.value.trim();
+    const row = document.getElementById('r-narration-row');
+    const val = document.getElementById('r-narration');
+    if (note) {
+      row.style.display = '';
+      val.textContent = note;
+    } else {
+      row.style.display = 'none';
+    }
+  }
+
+  narrationEl.addEventListener('input', () => {
+    updateNarrationDisplay();
+  });
+
+  function buildReceiptText() {
+    const lines = [
       'MorphSwift Payment Receipt',
       `Sent: ${receiptData.amount} ${receiptData.token}`,
       `To: ${document.getElementById('r-merchant').textContent}`,
       `Network: Morph`,
-      `Tx: ${receiptData.txHash || '—'}`,
-      `Time: ${document.getElementById('r-time').textContent}`,
-    ].join('\n');
-    navigator.clipboard.writeText(text).catch(() => {});
+    ];
+    const note = narrationEl.value.trim();
+    if (note) lines.push(`Narration: ${note}`);
+    lines.push(`Tx: ${receiptData.txHash || '—'}`);
+    lines.push(`Time: ${document.getElementById('r-time').textContent}`);
+    return lines.join('\n');
+  }
+
+  function saveAndCopy() {
+    persistReceipt();
+    navigator.clipboard.writeText(buildReceiptText()).catch(() => {});
     const btn = document.querySelector('.btn-primary');
     const prev = btn.textContent;
-    btn.textContent = 'Copied!';
+    btn.textContent = 'Saved & copied!';
     setTimeout(() => { btn.textContent = prev; }, 2000);
   }
 
   function closeReceipt() {
+    persistReceipt();
     if (window.history.length > 1) {
       window.history.back();
     } else {
