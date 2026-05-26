@@ -2,10 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>MorphSwift — Earnings Ledger</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="assets/css/responsive.css" />
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -29,7 +30,6 @@
   }
 
   html, body {
-    height: 100%;
     background: var(--bg);
     color: var(--text);
     font-family: var(--mono);
@@ -39,10 +39,6 @@
   body {
     display: flex;
     flex-direction: column;
-    max-width: 420px;
-    margin: 0 auto;
-    height: 100vh;
-    height: 100dvh;
   }
 
   /* Topbar */
@@ -524,7 +520,7 @@
   }
 </style>
 </head>
-<body>
+<body class="app-shell page-ledger">
 
 <!-- Topbar -->
 <div class="topbar">

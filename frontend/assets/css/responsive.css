@@ -1,0 +1,367 @@
+/* ============================================================
+   MorphSwift — Viewport & orientation layout
+   Linked from all POS HTML pages.
+   ============================================================ */
+
+:root {
+  --app-max-w: 420px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+}
+
+html {
+  height: 100%;
+  overflow: hidden;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* ── Shared POS shell (terminal, checkout, ledger) ─────────── */
+body.app-shell {
+  width: 100%;
+  max-width: min(var(--app-max-w), 100vw);
+  margin: 0 auto;
+  min-height: 0;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+  padding:
+    var(--safe-top)
+    max(var(--safe-right), 0px)
+    var(--safe-bottom)
+    max(var(--safe-left), 0px);
+}
+
+body.app-shell > * {
+  min-width: 0;
+}
+
+/* ── Onboarding (scrollable when content exceeds viewport) ─── */
+body.page-onboarding {
+  width: 100%;
+  min-height: 100dvh;
+  max-height: 100dvh;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding:
+    max(16px, var(--safe-top))
+    max(16px, var(--safe-right))
+    max(16px, var(--safe-bottom))
+    max(16px, var(--safe-left));
+  -webkit-overflow-scrolling: touch;
+}
+
+body.page-onboarding .container {
+  max-width: min(var(--app-max-w), 100%);
+  margin: 0 auto;
+}
+
+@media (min-height: 640px) {
+  body.page-onboarding {
+    justify-content: center;
+  }
+}
+
+/* ── Short viewports (landscape phones, small heights) ─────── */
+@media (max-height: 520px) {
+  body.page-onboarding .logo-row {
+    margin-bottom: 20px;
+  }
+
+  body.page-onboarding .sub {
+    margin-bottom: 20px;
+  }
+
+  body.page-onboarding .card {
+    padding: 18px;
+  }
+
+  body.page-onboarding .headline {
+    font-size: clamp(22px, 6vw, 28px);
+  }
+
+  body.page-onboarding .status-row {
+    margin-top: 16px;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+  }
+}
+
+/* ── Terminal ──────────────────────────────────────────────── */
+body.page-terminal .amount-display {
+  min-height: clamp(48px, 12dvh, 72px);
+}
+
+body.page-terminal .amount-value {
+  font-size: clamp(28px, 12vw, 72px);
+  letter-spacing: -0.04em;
+  overflow-wrap: anywhere;
+}
+
+body.page-terminal .cursor-blink {
+  height: clamp(28px, 8dvh, 52px);
+}
+
+body.page-terminal .key {
+  min-height: clamp(44px, 11dvh, 64px);
+}
+
+body.page-terminal .currency-row {
+  flex-wrap: wrap;
+  row-gap: 6px;
+}
+
+@media (max-height: 520px) {
+  body.page-terminal .topbar,
+  body.page-terminal .currency-row {
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+
+  body.page-terminal .amount-area {
+    padding: 4px 16px 8px;
+  }
+
+  body.page-terminal .conversion-card {
+    margin: 0 12px 6px;
+    padding: 8px 10px;
+  }
+
+  body.page-terminal .sc-amount {
+    font-size: 14px;
+  }
+
+  body.page-terminal .sc-network {
+    font-size: 9px;
+  }
+
+  body.page-terminal .key-sub {
+    display: none;
+  }
+
+  body.page-terminal .bottom-bar {
+    padding: 8px 16px;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 560px) {
+  body.page-terminal {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      "header header"
+      "currency currency"
+      "amount conversion"
+      "keypad keypad"
+      "footer footer";
+  }
+
+  body.page-terminal .topbar { grid-area: header; }
+  body.page-terminal .currency-row { grid-area: currency; }
+  body.page-terminal .amount-area { grid-area: amount; align-self: end; }
+  body.page-terminal .conversion-card {
+    grid-area: conversion;
+    margin: 0 16px 8px 0;
+    align-self: end;
+  }
+  body.page-terminal .keypad { grid-area: keypad; min-height: 0; }
+  body.page-terminal .bottom-bar { grid-area: footer; }
+}
+
+/* ── Checkout ──────────────────────────────────────────────── */
+body.page-checkout .qr-area {
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+body.page-checkout .qr-frame {
+  max-width: min(100%, 280px);
+}
+
+body.page-checkout #qr-canvas {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  max-width: 100%;
+}
+
+body.page-checkout #qr-canvas img,
+body.page-checkout #qr-canvas canvas {
+  width: min(200px, 38vmin, calc(100dvh - 260px)) !important;
+  height: min(200px, 38vmin, calc(100dvh - 260px)) !important;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+body.page-checkout .success-overlay {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding:
+    max(16px, var(--safe-top))
+    max(16px, var(--safe-right))
+    max(16px, var(--safe-bottom))
+    max(16px, var(--safe-left));
+}
+
+body.page-checkout .success-details {
+  max-width: min(var(--app-max-w), 100%);
+}
+
+@media (max-height: 520px) {
+  body.page-checkout .topbar,
+  body.page-checkout .amount-strip,
+  body.page-checkout .token-tabs {
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+
+  body.page-checkout .amount-strip-value {
+    font-size: clamp(20px, 5vw, 26px);
+  }
+
+  body.page-checkout .qr-area {
+    padding: 8px 16px;
+    gap: 10px;
+  }
+
+  body.page-checkout .qr-frame {
+    padding: 10px;
+  }
+
+  body.page-checkout .success-title {
+    font-size: clamp(24px, 6vw, 32px);
+  }
+
+  body.page-checkout .check-circle {
+    width: 72px;
+    height: 72px;
+    margin-bottom: 16px;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 560px) {
+  body.page-checkout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      "header header"
+      "amount tokens"
+      "qr qr"
+      "status status";
+  }
+
+  body.page-checkout .topbar { grid-area: header; }
+  body.page-checkout .amount-strip { grid-area: amount; }
+  body.page-checkout .token-tabs {
+    grid-area: tokens;
+    align-self: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+  body.page-checkout .qr-area {
+    grid-area: qr;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-content: center;
+  }
+  body.page-checkout .address-row {
+    flex: 1 1 100%;
+    max-width: min(100%, 360px);
+  }
+  body.page-checkout .status-bar { grid-area: status; }
+}
+
+/* ── Ledger ────────────────────────────────────────────────── */
+body.page-ledger {
+  overflow: hidden;
+}
+
+body.page-ledger .tx-list {
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
+body.page-ledger .stats-strip,
+body.page-ledger .filter-row,
+body.page-ledger .topbar,
+body.page-ledger .bottom-bar {
+  flex-shrink: 0;
+}
+
+@media (max-height: 520px) {
+  body.page-ledger .stats-strip {
+    padding: 10px 16px;
+  }
+
+  body.page-ledger .stat-value {
+    font-size: 18px;
+  }
+
+  body.page-ledger .mini-chart {
+    height: 28px;
+    margin-bottom: 8px;
+  }
+
+  body.page-ledger .withdraw-row {
+    flex-wrap: wrap;
+  }
+
+  body.page-ledger .withdraw-btn {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 560px) {
+  body.page-ledger .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  body.page-ledger .mini-chart {
+    margin-bottom: 8px;
+  }
+}
+
+body.page-ledger .modal-backdrop {
+  padding:
+    var(--safe-top)
+    var(--safe-right)
+    var(--safe-bottom)
+    var(--safe-left);
+}
+
+body.page-ledger .modal {
+  max-height: calc(100dvh - var(--safe-top) - var(--safe-bottom) - 24px);
+  overflow-y: auto;
+}
+
+/* ── Wide screens: keep phone-scale column centered ────────── */
+@media (min-width: 768px) {
+  :root {
+    --app-max-w: 440px;
+  }
+}
+
+/* ── Very narrow (folded / small phones) ───────────────────── */
+@media (max-width: 360px) {
+  body.page-terminal .merchant-pill span,
+  body.page-terminal .rate-badge {
+    font-size: 10px;
+  }
+
+  body.page-checkout .token-tab {
+    padding: 4px 10px;
+    font-size: 11px;
+  }
+
+  body.page-ledger .filter-tab {
+    padding: 4px 8px;
+  }
+}

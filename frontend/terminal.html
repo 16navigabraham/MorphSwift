@@ -2,10 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>MorphSwift — Terminal</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="assets/css/responsive.css" />
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -27,22 +28,16 @@
   }
 
   html, body {
-    height: 100%;
     background: var(--bg);
     color: var(--text);
     font-family: var(--mono);
     -webkit-font-smoothing: antialiased;
     user-select: none;
-    overflow: hidden;
   }
 
   body {
     display: flex;
     flex-direction: column;
-    max-width: 420px;
-    margin: 0 auto;
-    height: 100vh;
-    height: 100dvh;
   }
 
   /* Top bar */
@@ -172,7 +167,6 @@
 
   .amount-value {
     font-family: var(--display);
-    font-size: clamp(52px, 15vw, 72px);
     font-weight: 800;
     line-height: 1;
     letter-spacing: -2px;
@@ -388,7 +382,7 @@
   }
 </style>
 </head>
-<body>
+<body class="app-shell page-terminal">
 
 <!-- Top bar -->
 <div class="topbar">

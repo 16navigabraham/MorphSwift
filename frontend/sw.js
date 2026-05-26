@@ -10,6 +10,7 @@ const SHELL = [
   './assets/css/tokens.css',
   './assets/css/base.css',
   './assets/css/components.css',
+  './assets/css/responsive.css',
   './assets/icons/logo.svg',
   './assets/icons/favicon.svg',
 ];

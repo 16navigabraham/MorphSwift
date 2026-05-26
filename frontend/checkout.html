@@ -2,10 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>MorphSwift — Awaiting Payment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="assets/css/responsive.css" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -27,21 +28,15 @@
   }
 
   html, body {
-    height: 100%;
     background: var(--bg);
     color: var(--text);
     font-family: var(--mono);
     -webkit-font-smoothing: antialiased;
-    overflow: hidden;
   }
 
   body {
     display: flex;
     flex-direction: column;
-    max-width: 420px;
-    margin: 0 auto;
-    height: 100vh;
-    height: 100dvh;
   }
 
   /* Top bar */
@@ -115,6 +110,7 @@
   /* Token selector */
   .token-tabs {
     display: flex;
+    flex-wrap: wrap;
     gap: 6px;
     padding: 10px 20px;
     flex-shrink: 0;
@@ -415,7 +411,7 @@
   }
 </style>
 </head>
-<body>
+<body class="app-shell page-checkout">
 
 <!-- Top bar -->
 <div class="topbar">
@@ -555,20 +551,38 @@
     document.getElementById('wallet-addr').dataset.full = addr;
   }
 
+  function qrPixelSize() {
+    const vmin = Math.min(window.innerWidth, window.innerHeight);
+    const reserved = window.innerHeight <= 520 ? 220 : 280;
+    const fromViewport = Math.min(vmin * 0.38, window.innerHeight - reserved);
+    return Math.max(120, Math.min(200, Math.round(fromViewport)));
+  }
+
+  let resizeQrTimer;
   function buildQR() {
     const container = document.getElementById('qr-canvas');
     container.innerHTML = '';
     const addr = WALLETS[getWalletKey()] || WALLETS['USDC-Polygon'];
     const payload = `ethereum:${addr}?value=${rawUSD}&token=${currentToken}&network=${currentNetwork}`;
+    const size = qrPixelSize();
     new QRCode(container, {
       text: payload,
-      width: 200,
-      height: 200,
+      width: size,
+      height: size,
       colorDark: '#000000',
       colorLight: '#ffffff',
       correctLevel: QRCode.CorrectLevel.H,
     });
   }
+
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeQrTimer);
+    resizeQrTimer = setTimeout(buildQR, 150);
+  });
+
+  window.addEventListener('orientationchange', () => {
+    setTimeout(buildQR, 200);
+  });
 
   function copyAddress() {
     const addr = document.getElementById('wallet-addr').dataset.full
