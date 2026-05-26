@@ -156,26 +156,34 @@
     display: flex;
     align-items: flex-end;
     gap: 4px;
-    min-height: clamp(36px, 8dvh, 56px);
+    min-height: clamp(32px, 7dvh, 48px);
+    flex-wrap: nowrap;
+    overflow: hidden;
   }
 
   .amount-currency {
     font-family: var(--display);
-    font-size: 28px;
+    font-size: clamp(18px, 5vw, 24px);
     font-weight: 700;
     color: var(--muted);
     line-height: 1;
-    padding-bottom: 6px;
+    padding-bottom: 4px;
+    flex-shrink: 0;
   }
 
   .amount-value {
     font-family: var(--display);
     font-weight: 800;
+    font-size: clamp(20px, calc((100vw - 96px) / 7), 38px);
     line-height: 1;
-    letter-spacing: -2px;
+    letter-spacing: -0.04em;
     color: var(--text);
     transition: color 0.2s;
-    word-break: break-all;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: clip;
+    flex: 1 1 auto;
+    min-width: 0;
   }
 
   .amount-value.has-value { color: #fff; }
@@ -252,10 +260,13 @@
   }
 
   .sc-amount {
-    font-size: 18px;
+    font-size: clamp(12px, 3vw, 15px);
     font-weight: 500;
     color: var(--text);
     letter-spacing: -0.3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .sc-network {

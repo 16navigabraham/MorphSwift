@@ -131,17 +131,25 @@ body.page-onboarding .container {
 
 /* ── Terminal ──────────────────────────────────────────────── */
 body.page-terminal .amount-display {
-  min-height: clamp(40px, 10dvh, 72px);
+  min-height: clamp(32px, 7dvh, 48px);
 }
 
 body.page-terminal .amount-value {
-  font-size: clamp(28px, 10vw, 72px);
+  font-size: clamp(20px, calc((100vw - 96px) / 7), 38px);
   letter-spacing: -0.04em;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: clip;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+body.page-terminal .amount-currency {
+  font-size: clamp(18px, 5vw, 24px);
 }
 
 body.page-terminal .cursor-blink {
-  height: clamp(24px, 7dvh, 52px);
+  height: clamp(18px, 5dvh, 36px);
 }
 
 body.page-terminal .key {

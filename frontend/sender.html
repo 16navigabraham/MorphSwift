@@ -128,37 +128,49 @@
 
       <div class="receipt-card">
         <div class="receipt-scroll">
-          <div class="receipt-row">
-            <span class="receipt-key">You sent</span>
-            <span class="receipt-val green" id="r-amount">—</span>
+          <div class="receipt-line">
+            <div class="receipt-cell">
+              <span class="receipt-key">You sent</span>
+              <span class="receipt-val green" id="r-amount">—</span>
+            </div>
+            <div class="receipt-cell">
+              <span class="receipt-key">Fiat equivalent</span>
+              <span class="receipt-val" id="r-fiat">—</span>
+            </div>
           </div>
-          <div class="receipt-row">
-            <span class="receipt-key">To</span>
-            <span class="receipt-val" id="r-merchant">—</span>
+          <div class="receipt-line">
+            <div class="receipt-cell">
+              <span class="receipt-key">To</span>
+              <span class="receipt-val" id="r-merchant">—</span>
+            </div>
+            <div class="receipt-cell">
+              <span class="receipt-key">Token</span>
+              <span class="receipt-val" id="r-token">USDC</span>
+            </div>
           </div>
-          <div class="receipt-row" id="r-narration-row" style="display:none">
-            <span class="receipt-key">Note</span>
-            <span class="receipt-val" id="r-narration">—</span>
+          <div class="receipt-line receipt-line--solo">
+            <div class="receipt-cell">
+              <span class="receipt-key">Network</span>
+              <span class="receipt-val">Morph</span>
+            </div>
           </div>
-          <div class="receipt-row" id="r-fiat-row">
-            <span class="receipt-key">Fiat equivalent</span>
-            <span class="receipt-val" id="r-fiat">—</span>
+          <div class="receipt-line receipt-line--solo receipt-line--center" id="r-narration-row" style="display:none">
+            <div class="receipt-cell">
+              <span class="receipt-key">Note</span>
+              <span class="receipt-val" id="r-narration">—</span>
+            </div>
           </div>
-          <div class="receipt-row">
-            <span class="receipt-key">Network</span>
-            <span class="receipt-val">Morph</span>
+          <div class="receipt-line receipt-line--solo receipt-line--center">
+            <div class="receipt-cell">
+              <span class="receipt-key">Tx hash</span>
+              <span class="receipt-val mono" id="r-tx">—</span>
+            </div>
           </div>
-          <div class="receipt-row">
-            <span class="receipt-key">Token</span>
-            <span class="receipt-val" id="r-token">USDC</span>
-          </div>
-          <div class="receipt-row receipt-row--wide">
-            <span class="receipt-key">Tx hash</span>
-            <span class="receipt-val mono" id="r-tx">—</span>
-          </div>
-          <div class="receipt-row" id="r-time-row">
-            <span class="receipt-key">Time</span>
-            <span class="receipt-val" id="r-time">—</span>
+          <div class="receipt-line receipt-line--solo receipt-line--center" id="r-time-row">
+            <div class="receipt-cell">
+              <span class="receipt-key">Time</span>
+              <span class="receipt-val" id="r-time">—</span>
+            </div>
           </div>
         </div>
       </div>

@@ -332,14 +332,37 @@ body.page-sender .receipt-card {
 }
 
 body.page-sender .receipt-scroll {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  column-gap: clamp(8px, 2vw, 14px);
-  row-gap: clamp(2px, 0.6vmin, 4px);
-  align-content: start;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(4px, 1vmin, 8px);
   height: 100%;
   overflow: hidden;
   width: 100%;
+}
+
+body.page-sender .receipt-line {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(8px, 2vw, 14px);
+}
+
+body.page-sender .receipt-line--solo {
+  grid-template-columns: 1fr;
+}
+
+body.page-sender .receipt-line--center .receipt-cell {
+  align-items: center;
+  text-align: center;
+}
+
+body.page-sender .receipt-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  text-align: center;
+  gap: 1px;
+  min-width: 0;
 }
 
 body.page-sender .receipt-row {
@@ -351,10 +374,6 @@ body.page-sender .receipt-row {
   text-align: center;
   gap: 1px;
   border-bottom: none;
-}
-
-body.page-sender .receipt-row--wide {
-  grid-column: 1 / -1;
 }
 
 body.page-sender .check-circle {
@@ -514,11 +533,13 @@ body.page-sender .receipt-key {
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
+
 body.page-sender .receipt-val {
   font-weight: 500;
   text-align: center;
   word-break: break-word;
   font-size: clamp(10px, 2.6vw, 12px);
+  max-width: 100%;
 }
 
 body.page-sender .receipt-val.mono {
@@ -528,8 +549,9 @@ body.page-sender .receipt-val.mono {
   word-break: break-all;
 }
 
-body.page-sender .receipt-row--wide .receipt-val {
-  max-width: 100%;
+body.page-sender .receipt-line--center .receipt-val {
+  text-align: center;
+  width: 100%;
 }
 
 body.page-sender .status-banner {
@@ -558,8 +580,12 @@ body.page-sender .status-banner {
     font-size: 11px;
   }
 
-  body.page-sender .receipt-row {
-    font-size: clamp(8px, 2vw, 10px);
+  body.page-sender .receipt-line {
+    gap: clamp(6px, 1.5vw, 10px);
+  }
+
+  body.page-sender .receipt-val {
+    font-size: clamp(9px, 2.4vw, 11px);
   }
 
   body.page-sender .check-circle {
