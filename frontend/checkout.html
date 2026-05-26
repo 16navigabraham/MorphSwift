@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>PayFlow — Awaiting Payment</title>
+<title>MorphSwift — Awaiting Payment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -633,7 +633,7 @@
     launchConfetti();
 
     // Save to ledger history
-    const history = JSON.parse(localStorage.getItem('payflow-history') || '[]');
+    const history = JSON.parse(localStorage.getItem('morphswift-history') || localStorage.getItem('payflow-history') || '[]');
     history.unshift({
       id: Date.now(),
       timestamp: new Date().toISOString(),
@@ -644,7 +644,7 @@
       network: currentNetwork,
       status: 'confirmed',
     });
-    localStorage.setItem('payflow-history', JSON.stringify(history.slice(0, 100)));
+    localStorage.setItem('morphswift-history', JSON.stringify(history.slice(0, 100)));
   }
 
   function launchConfetti() {

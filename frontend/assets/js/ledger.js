@@ -115,7 +115,7 @@ export function transactionsToCsv(transactions) {
   return `${header}\n${rows.join('\n')}`;
 }
 
-export function downloadCsv(transactions, filename = 'payflow-ledger.csv') {
+export function downloadCsv(transactions, filename = 'morphswift-ledger.csv') {
   const blob = new Blob([transactionsToCsv(transactions)], { type: 'text/csv' });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');

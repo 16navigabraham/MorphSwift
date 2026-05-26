@@ -1,5 +1,5 @@
 /**
- * MorphSwift / PayFlow frontend configuration.
+ * MorphSwift frontend configuration.
  * Import from page scripts: import { CONFIG } from './config.js';
  */
 
@@ -10,8 +10,7 @@ const isLocalhost =
 export const CONFIG = {
   apiBaseUrl: isLocalhost ? 'http://localhost:4000/api' : '/api',
 
-  brandName: 'PayFlow',
-  productName: 'MorphSwift',
+  brandName: 'MorphSwift',
 
   /** Demo fiat symbols when API config is unavailable */
   currencySymbols: {
@@ -28,7 +27,7 @@ export const CONFIG = {
   storage: {
     sessionToken: 'morphswift-session-token',
     merchant: 'morphswift-merchant',
-    history: 'payflow-history',
+    history: 'morphswift-history',
     chargeAmount: 'chargeAmount',
     chargeUsd: 'chargeUSD',
     chargeCurrency: 'chargeCurrency',

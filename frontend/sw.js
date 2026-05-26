@@ -1,7 +1,7 @@
 /**
  * Minimal service worker — caches static shell for faster repeat visits.
  */
-const CACHE = 'payflow-shell-v1';
+const CACHE = 'morphswift-shell-v1';
 const SHELL = [
   './onboarding.html',
   './terminal.html',

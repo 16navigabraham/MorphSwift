@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>PayFlow — Earnings Ledger</title>
+<title>MorphSwift — Earnings Ledger</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
 <style>
@@ -528,7 +528,7 @@
 
 <!-- Topbar -->
 <div class="topbar">
-  <div class="logo">Pay<span>Flow</span></div>
+  <div class="logo">Morph<span>Swift</span></div>
   <div class="topbar-actions">
     <button class="icon-btn" title="Export CSV" onclick="exportCSV()">↓</button>
     <a class="icon-btn" href="terminal.html" title="New Payment">+</a>
@@ -635,7 +635,7 @@
   ];
 
   // Merge with any real localStorage entries
-  let localTxs = JSON.parse(localStorage.getItem('payflow-history') || '[]');
+  let localTxs = JSON.parse(localStorage.getItem('morphswift-history') || localStorage.getItem('payflow-history') || '[]');
   let allTxs = [...localTxs, ...DEMO_TXS].sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
 
   let activeFilter = 'all';
@@ -801,7 +801,7 @@
     const blob = new Blob([header+'\n'+rows], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url; a.download = 'payflow-ledger.csv'; a.click();
+    a.href = url; a.download = 'morphswift-ledger.csv'; a.click();
     URL.revokeObjectURL(url);
   }
 

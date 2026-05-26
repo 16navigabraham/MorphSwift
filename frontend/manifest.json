@@ -1,6 +1,6 @@
 {
-  "name": "PayFlow POS",
-  "short_name": "PayFlow",
+  "name": "MorphSwift POS",
+  "short_name": "MorphSwift",
   "description": "Mobile-first crypto point-of-sale for merchants on MorphSwift.",
   "start_url": "./onboarding.html",
   "scope": "./",
