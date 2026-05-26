@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PayFlow — Earnings Ledger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface-2: #1a1a24;
+    --surface-3: #222233;
+    --border: rgba(255,255,255,0.07);
+    --border-2: rgba(255,255,255,0.04);
+    --amber: #f5a623;
+    --amber-dim: rgba(245,166,35,0.10);
+    --text: #f0ede8;
+    --muted: #5c5b70;
+    --muted-2: #2e2e3e;
+    --green: #22c55e;
+    --green-dim: rgba(34,197,94,0.1);
+    --red: #e24b4a;
+    --mono: 'DM Mono', monospace;
+    --display: 'Syne', sans-serif;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+    max-width: 420px;
+    margin: 0 auto;
+    height: 100vh;
+    height: 100dvh;
+  }
+
+  /* Topbar */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .logo {
+    font-family: var(--display);
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.4px;
+  }
+
+  .logo span { color: var(--amber); }
+
+  .topbar-actions { display: flex; gap: 8px; }
+
+  .icon-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 15px;
+    text-decoration: none;
+  }
+
+  .icon-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.15); }
+
+  /* Stats strip */
+  .stats-strip {
+    flex-shrink: 0;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+  }
+
+  .stat-label {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .stat-value {
+    font-family: var(--display);
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+
+  .stat-value.amber { color: var(--amber); }
+  .stat-value.green { color: var(--green); }
+
+  .stat-sub {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 3px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .stat-sub.up { color: var(--green); }
+  .stat-sub.down { color: var(--red); }
+
+  /* Mini bar chart */
+  .mini-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    height: 36px;
+    margin-bottom: 14px;
+  }
+
+  .mini-bar {
+    flex: 1;
+    background: var(--surface-2);
+    border-radius: 3px 3px 0 0;
+    transition: background 0.2s;
+    cursor: pointer;
+    position: relative;
+  }
+
+  .mini-bar.today { background: var(--amber); }
+  .mini-bar:hover { opacity: 0.8; }
+
+  .chart-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 9px;
+    color: var(--muted-2);
+    margin-bottom: 14px;
+    padding: 0 1px;
+  }
+
+  /* Withdraw CTA */
+  .withdraw-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .balance-chip {
+    flex: 1;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .balance-chip-label { font-size: 10px; color: var(--muted); letter-spacing: 0.07em; text-transform: uppercase; }
+  .balance-chip-value { font-size: 18px; font-weight: 500; color: var(--text); }
+
+  .withdraw-btn {
+    background: var(--amber);
+    border: none;
+    border-radius: 8px;
+    padding: 10px 18px;
+    color: #0a0a0f;
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: opacity 0.2s, transform 0.1s;
+  }
+
+  .withdraw-btn:hover { opacity: 0.9; }
+  .withdraw-btn:active { transform: scale(0.98); }
+
+  /* Filter row */
+  .filter-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 20px 8px;
+    flex-shrink: 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .filter-tab {
+    padding: 4px 12px;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .filter-tab.active {
+    background: var(--surface-2);
+    border-color: var(--border);
+    color: var(--text);
+  }
+
+  .filter-count {
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  /* Transactions list */
+  .tx-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 20px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .tx-list::-webkit-scrollbar { width: 4px; }
+  .tx-list::-webkit-scrollbar-track { background: transparent; }
+  .tx-list::-webkit-scrollbar-thumb { background: var(--muted-2); border-radius: 2px; }
+
+  .day-group-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 0 8px;
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    z-index: 1;
+  }
+
+  .day-label {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+  }
+
+  .day-total {
+    font-size: 12px;
+    color: var(--amber);
+  }
+
+  .tx-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border-2);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .tx-item:last-child { border-bottom: none; }
+  .tx-item:hover { background: var(--surface-2); margin: 0 -12px; padding: 12px 12px; border-radius: 8px; }
+
+  .tx-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  .tx-icon.confirmed { background: var(--green-dim); color: var(--green); border: 1px solid rgba(34,197,94,0.15); }
+  .tx-icon.pending   { background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(245,166,35,0.15); }
+  .tx-icon.failed    { background: rgba(226,75,74,0.1); color: var(--red); border: 1px solid rgba(226,75,74,0.15); }
+  .tx-icon.withdrawn { background: var(--surface-2); color: var(--muted); border: 1px solid var(--border); }
+
+  .tx-info { flex: 1; min-width: 0; }
+
+  .tx-primary {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    margin-bottom: 3px;
+  }
+
+  .tx-amount {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text);
+    flex-shrink: 0;
+  }
+
+  .tx-token {
+    font-size: 11px;
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+
+  .tx-fiat {
+    font-size: 11px;
+    color: var(--muted);
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+
+  .tx-secondary {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--muted);
+    overflow: hidden;
+  }
+
+  .tx-network-pill {
+    background: var(--surface-2);
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-size: 10px;
+    border: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .tx-hash {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .tx-time { margin-left: auto; flex-shrink: 0; }
+
+  /* Status pill */
+  .status-pill {
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+
+  .status-pill.confirmed { background: var(--green-dim); color: var(--green); }
+  .status-pill.pending   { background: var(--amber-dim); color: var(--amber); }
+  .status-pill.failed    { background: rgba(226,75,74,0.1); color: var(--red); }
+
+  /* Empty state */
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 32px;
+    text-align: center;
+    gap: 12px;
+    color: var(--muted);
+  }
+
+  .empty-icon { font-size: 40px; opacity: 0.3; }
+  .empty-title { font-family: var(--display); font-size: 18px; font-weight: 700; color: var(--surface-3); }
+  .empty-sub { font-size: 13px; line-height: 1.6; }
+
+  /* Bottom nav */
+  .bottom-bar {
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+    gap: 12px;
+    flex-shrink: 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .nav-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 14px;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 12px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.15s;
+  }
+
+  .nav-btn:hover { border-color: rgba(255,255,255,0.15); color: var(--text); }
+
+  .nav-btn.active {
+    color: var(--amber);
+    border-color: rgba(245,166,35,0.3);
+    background: var(--amber-dim);
+  }
+
+  /* Withdraw modal */
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 50;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s;
+  }
+
+  .modal-backdrop.open { opacity: 1; pointer-events: all; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px 20px 0 0;
+    padding: 24px 20px 32px;
+    width: 100%;
+    max-width: 420px;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.32,0.72,0,1);
+  }
+
+  .modal-backdrop.open .modal { transform: translateY(0); }
+
+  .modal-handle {
+    width: 36px;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin: 0 auto 20px;
+  }
+
+  .modal-title {
+    font-family: var(--display);
+    font-size: 20px;
+    font-weight: 800;
+    margin-bottom: 6px;
+    letter-spacing: -0.4px;
+  }
+
+  .modal-sub { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
+
+  .modal-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    font-size: 13px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .modal-row:last-of-type { border-bottom: none; }
+  .modal-row-key { color: var(--muted); }
+  .modal-row-val { font-weight: 500; }
+
+  .modal-input {
+    width: 100%;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 13px 16px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    outline: none;
+    margin: 16px 0 12px;
+    transition: border-color 0.2s;
+  }
+
+  .modal-input::placeholder { color: var(--muted-2); }
+  .modal-input:focus { border-color: rgba(245,166,35,0.4); }
+
+  .modal-confirm-btn {
+    width: 100%;
+    background: var(--amber);
+    border: none;
+    border-radius: 10px;
+    padding: 15px;
+    color: #0a0a0f;
+    font-family: var(--display);
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+
+  .modal-confirm-btn:hover { opacity: 0.9; }
+
+  .modal-cancel {
+    width: 100%;
+    background: transparent;
+    border: none;
+    padding: 12px;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 13px;
+    cursor: pointer;
+    margin-top: 6px;
+  }
+</style>
+</head>
+<body>
+
+<!-- Topbar -->
+<div class="topbar">
+  <div class="logo">Pay<span>Flow</span></div>
+  <div class="topbar-actions">
+    <button class="icon-btn" title="Export CSV" onclick="exportCSV()">↓</button>
+    <a class="icon-btn" href="terminal.html" title="New Payment">+</a>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="stats-strip">
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">Today's Revenue</div>
+      <div class="stat-value amber" id="today-rev">$0.00</div>
+      <div class="stat-sub up" id="today-count">— txns</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">7-Day Total</div>
+      <div class="stat-value" id="week-rev">$0.00</div>
+      <div class="stat-sub" id="week-change">vs last week</div>
+    </div>
+  </div>
+
+  <!-- Mini bar chart -->
+  <div class="mini-chart" id="mini-chart"></div>
+  <div class="chart-labels" id="chart-labels"></div>
+
+  <!-- Withdraw -->
+  <div class="withdraw-row">
+    <div class="balance-chip">
+      <div class="balance-chip-label">Available Balance</div>
+      <div class="balance-chip-value" id="balance">$0.00 USDC</div>
+    </div>
+    <button class="withdraw-btn" onclick="openWithdraw()">Withdraw →</button>
+  </div>
+</div>
+
+<!-- Filter -->
+<div class="filter-row">
+  <button class="filter-tab active" onclick="setFilter('all', this)">All</button>
+  <button class="filter-tab" onclick="setFilter('confirmed', this)">Confirmed</button>
+  <button class="filter-tab" onclick="setFilter('pending', this)">Pending</button>
+  <span class="filter-count" id="filter-count">0 txns</span>
+</div>
+
+<!-- Transaction list -->
+<div class="tx-list" id="tx-list">
+  <div class="empty-state" id="empty-state">
+    <div class="empty-icon">◈</div>
+    <div class="empty-title">No transactions yet</div>
+    <p class="empty-sub">Your payments will appear here after your first charge on the terminal.</p>
+  </div>
+</div>
+
+<!-- Bottom nav -->
+<div class="bottom-bar">
+  <a class="nav-btn" href="terminal.html">
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.25"/><rect x="9" y="1" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.25"/><rect x="1" y="9" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.25"/><rect x="9" y="9" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.25"/></svg>
+    Keypad
+  </a>
+  <a class="nav-btn active" href="ledger.html">
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M2 8h8M2 12h10" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/></svg>
+    Ledger
+  </a>
+</div>
+
+<!-- Withdraw modal -->
+<div class="modal-backdrop" id="modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2 class="modal-title">Withdraw Funds</h2>
+    <p class="modal-sub">Transfer your balance to any external wallet.</p>
+
+    <div class="modal-row">
+      <span class="modal-row-key">Available</span>
+      <span class="modal-row-val" id="modal-balance">$0.00 USDC</span>
+    </div>
+    <div class="modal-row">
+      <span class="modal-row-key">Network fee (est.)</span>
+      <span class="modal-row-val">~$0.02 USDC</span>
+    </div>
+    <div class="modal-row">
+      <span class="modal-row-key">Receive net</span>
+      <span class="modal-row-val green" id="modal-net" style="color:var(--green)">$0.00 USDC</span>
+    </div>
+
+    <input type="text" class="modal-input" id="dest-addr" placeholder="Destination wallet address (0x…)" />
+
+    <button class="modal-confirm-btn" onclick="confirmWithdraw()">Confirm Withdrawal</button>
+    <button class="modal-cancel" onclick="closeModal()">Cancel</button>
+  </div>
+</div>
+
+<script>
+  const DEMO_TXS = [
+    { id: 1001, timestamp: new Date(Date.now() - 1*60*60*1000).toISOString(), usdAmount: 12.50, fiatAmount: 701, fiatCurrency: 'PHP', token: 'USDC', network: 'Polygon', status: 'confirmed', hash: '0x4a2f…e7c3' },
+    { id: 1002, timestamp: new Date(Date.now() - 3*60*60*1000).toISOString(), usdAmount: 8.91, fiatAmount: 500, fiatCurrency: 'PHP', token: 'USDT', network: 'Tron', status: 'confirmed', hash: '0x9b3c…2e1d' },
+    { id: 1003, timestamp: new Date(Date.now() - 5*60*60*1000).toISOString(), usdAmount: 3.20, fiatAmount: 179, fiatCurrency: 'PHP', token: 'USDC', network: 'Polygon', status: 'pending', hash: '0x7f11…b4a9' },
+    { id: 1004, timestamp: new Date(Date.now() - 1*24*60*60*1000).toISOString(), usdAmount: 22.00, fiatAmount: 1234, fiatCurrency: 'PHP', token: 'USDC', network: 'Polygon', status: 'confirmed', hash: '0xce7a…19f2' },
+    { id: 1005, timestamp: new Date(Date.now() - 1*24*60*60*1000 - 2*60*60*1000).toISOString(), usdAmount: 5.75, fiatAmount: 322, fiatCurrency: 'PHP', token: 'USDT', network: 'Ethereum', status: 'confirmed', hash: '0x3d88…c5b0' },
+    { id: 1006, timestamp: new Date(Date.now() - 2*24*60*60*1000).toISOString(), usdAmount: 15.00, fiatAmount: 842, fiatCurrency: 'PHP', token: 'USDC', network: 'Polygon', status: 'confirmed', hash: '0x8e42…f3d1' },
+    { id: 1007, timestamp: new Date(Date.now() - 3*24*60*60*1000).toISOString(), usdAmount: 1.50, fiatAmount: 84, fiatCurrency: 'PHP', token: 'USDT', network: 'Tron', status: 'failed', hash: '0x2c19…77aa' },
+    { id: 1008, timestamp: new Date(Date.now() - 3*24*60*60*1000 - 4*60*60*1000).toISOString(), usdAmount: 30.00, fiatAmount: 1684, fiatCurrency: 'PHP', token: 'USDC', network: 'Polygon', status: 'confirmed', hash: '0xb771…0e5c' },
+    { id: 1009, timestamp: new Date(Date.now() - 4*24*60*60*1000).toISOString(), usdAmount: 18.40, fiatAmount: 1033, fiatCurrency: 'PHP', token: 'USDT', network: 'Ethereum', status: 'confirmed', hash: '0x55da…a3f9' },
+    { id: 1010, timestamp: new Date(Date.now() - 5*24*60*60*1000).toISOString(), usdAmount: 7.25, fiatAmount: 407, fiatCurrency: 'PHP', token: 'USDC', network: 'Polygon', status: 'confirmed', hash: '0xd2e0…8b1f' },
+  ];
+
+  // Merge with any real localStorage entries
+  let localTxs = JSON.parse(localStorage.getItem('payflow-history') || '[]');
+  let allTxs = [...localTxs, ...DEMO_TXS].sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+  let activeFilter = 'all';
+
+  function dateKey(iso) {
+    const d = new Date(iso);
+    const today = new Date();
+    const yesterday = new Date(today); yesterday.setDate(today.getDate()-1);
+    if (d.toDateString() === today.toDateString()) return 'Today';
+    if (d.toDateString() === yesterday.toDateString()) return 'Yesterday';
+    return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  }
+
+  function fmtTime(iso) {
+    return new Date(iso).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+  }
+
+  function statusIcon(s) {
+    if (s === 'confirmed') return '✓';
+    if (s === 'pending') return '◷';
+    if (s === 'failed') return '✕';
+    if (s === 'withdrawn') return '↑';
+    return '?';
+  }
+
+  function renderList() {
+    const filtered = activeFilter === 'all' ? allTxs : allTxs.filter(t => t.status === activeFilter);
+    document.getElementById('filter-count').textContent = filtered.length + ' txn' + (filtered.length !== 1 ? 's' : '');
+
+    const container = document.getElementById('tx-list');
+
+    if (filtered.length === 0) {
+      container.innerHTML = `<div class="empty-state"><div class="empty-icon">◈</div><div class="empty-title">No transactions</div><p class="empty-sub">No ${activeFilter} transactions found.</p></div>`;
+      return;
+    }
+
+    // Group by day
+    const groups = {};
+    filtered.forEach(tx => {
+      const key = dateKey(tx.timestamp);
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(tx);
+    });
+
+    let html = '';
+    for (const [day, txs] of Object.entries(groups)) {
+      const dayTotal = txs.filter(t => t.status === 'confirmed').reduce((s,t) => s + t.usdAmount, 0);
+      html += `<div class="day-group-header"><span class="day-label">${day}</span><span class="day-total">$${dayTotal.toFixed(2)}</span></div>`;
+      txs.forEach(tx => {
+        const syms = { PHP: '₱', USD: '$', NGN: '₦' };
+        const sym = syms[tx.fiatCurrency] || '₱';
+        html += `
+          <div class="tx-item" onclick="showTxDetail('${tx.id}')">
+            <div class="tx-icon ${tx.status}">${statusIcon(tx.status)}</div>
+            <div class="tx-info">
+              <div class="tx-primary">
+                <span class="tx-amount">$${tx.usdAmount.toFixed(2)}</span>
+                <span class="tx-token">${tx.token}</span>
+                <span class="tx-fiat">${sym}${tx.fiatAmount.toLocaleString()}</span>
+              </div>
+              <div class="tx-secondary">
+                <span class="tx-network-pill">${tx.network}</span>
+                <span class="tx-hash">${tx.hash || '0x…'}</span>
+                <span class="tx-time">${fmtTime(tx.timestamp)}</span>
+              </div>
+            </div>
+            <span class="status-pill ${tx.status}">${tx.status}</span>
+          </div>`;
+      });
+    }
+
+    container.innerHTML = html;
+  }
+
+  function computeStats() {
+    const today = new Date().toDateString();
+    const todayTxs = allTxs.filter(t => new Date(t.timestamp).toDateString() === today && t.status === 'confirmed');
+    const todayRev = todayTxs.reduce((s,t) => s + t.usdAmount, 0);
+
+    const weekAgo = new Date(Date.now() - 7*24*60*60*1000);
+    const weekTxs = allTxs.filter(t => new Date(t.timestamp) >= weekAgo && t.status === 'confirmed');
+    const weekRev = weekTxs.reduce((s,t) => s + t.usdAmount, 0);
+
+    const confirmedBalance = allTxs.filter(t => t.status === 'confirmed').reduce((s,t) => s + t.usdAmount, 0);
+
+    document.getElementById('today-rev').textContent = '$' + todayRev.toFixed(2);
+    document.getElementById('today-count').textContent = '↑ ' + todayTxs.length + ' txn' + (todayTxs.length !== 1 ? 's' : '');
+    document.getElementById('week-rev').textContent = '$' + weekRev.toFixed(2);
+    document.getElementById('balance').textContent = '$' + confirmedBalance.toFixed(2) + ' USDC';
+    document.getElementById('modal-balance').textContent = '$' + confirmedBalance.toFixed(2) + ' USDC';
+    document.getElementById('modal-net').textContent = '$' + Math.max(0, confirmedBalance - 0.02).toFixed(2) + ' USDC';
+
+    buildMiniChart();
+  }
+
+  function buildMiniChart() {
+    const days = 7;
+    const buckets = Array.from({length: days}, (_,i) => {
+      const d = new Date(); d.setDate(d.getDate() - (days-1-i)); return d.toDateString();
+    });
+    const dayLabels = buckets.map(ds => {
+      const d = new Date(ds);
+      return d.toLocaleDateString('en-US', { weekday: 'short' }).slice(0,1);
+    });
+    const totals = buckets.map(ds =>
+      allTxs.filter(t => new Date(t.timestamp).toDateString() === ds && t.status === 'confirmed')
+             .reduce((s,t) => s + t.usdAmount, 0)
+    );
+    const maxVal = Math.max(...totals, 1);
+    const chartEl = document.getElementById('mini-chart');
+    const labelsEl = document.getElementById('chart-labels');
+    chartEl.innerHTML = totals.map((v,i) => {
+      const pct = Math.max(8, Math.round((v/maxVal)*100));
+      const isToday = i === days-1;
+      return `<div class="mini-bar ${isToday ? 'today' : ''}" style="height:${pct}%" title="$${v.toFixed(2)}"></div>`;
+    }).join('');
+    labelsEl.innerHTML = dayLabels.map(l => `<span>${l}</span>`).join('');
+  }
+
+  function setFilter(f, btn) {
+    activeFilter = f;
+    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    renderList();
+  }
+
+  function openWithdraw() {
+    document.getElementById('modal').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('modal').classList.remove('open');
+  }
+
+  function confirmWithdraw() {
+    const addr = document.getElementById('dest-addr').value.trim();
+    if (!addr) {
+      document.getElementById('dest-addr').style.borderColor = 'rgba(226,75,74,0.5)';
+      setTimeout(() => { document.getElementById('dest-addr').style.borderColor = ''; }, 2000);
+      return;
+    }
+    const btn = document.querySelector('.modal-confirm-btn');
+    btn.textContent = 'Processing…';
+    btn.style.opacity = '0.7';
+    setTimeout(() => {
+      btn.textContent = '✓ Withdrawal Initiated';
+      btn.style.background = 'var(--green)';
+      setTimeout(() => { closeModal(); btn.textContent = 'Confirm Withdrawal'; btn.style.background = ''; btn.style.opacity = ''; }, 1500);
+    }, 2000);
+  }
+
+  function showTxDetail(id) {
+    const tx = allTxs.find(t => String(t.id) === String(id));
+    if (!tx) return;
+    alert(`Tx: ${tx.hash}\nAmount: $${tx.usdAmount} ${tx.token}\nNetwork: ${tx.network}\nStatus: ${tx.status}\nTime: ${new Date(tx.timestamp).toLocaleString()}`);
+  }
+
+  function exportCSV() {
+    const header = 'ID,Date,Amount USD,Token,Network,Fiat Amount,Fiat Currency,Status,Hash';
+    const rows = allTxs.map(t =>
+      `${t.id},${new Date(t.timestamp).toLocaleDateString()},${t.usdAmount},${t.token},${t.network},${t.fiatAmount},${t.fiatCurrency},${t.status},${t.hash||''}`
+    ).join('\n');
+    const blob = new Blob([header+'\n'+rows], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'payflow-ledger.csv'; a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // Close modal on backdrop click
+  document.getElementById('modal').addEventListener('click', e => {
+    if (e.target === document.getElementById('modal')) closeModal();
+  });
+
+  // Init
+  computeStats();
+  renderList();
+</script>
+</body>
+</html>

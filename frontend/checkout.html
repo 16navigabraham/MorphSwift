@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PayFlow — Awaiting Payment</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface-2: #1a1a24;
+    --border: rgba(255,255,255,0.07);
+    --amber: #f5a623;
+    --amber-dim: rgba(245,166,35,0.10);
+    --text: #f0ede8;
+    --muted: #5c5b70;
+    --green: #22c55e;
+    --green-dim: rgba(34,197,94,0.12);
+    --red: #e24b4a;
+    --mono: 'DM Mono', monospace;
+    --display: 'Syne', sans-serif;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+    max-width: 420px;
+    margin: 0 auto;
+    height: 100vh;
+    height: 100dvh;
+  }
+
+  /* Top bar */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .back-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--muted);
+    text-decoration: none;
+    cursor: pointer;
+    transition: color 0.15s;
+  }
+
+  .back-btn:hover { color: var(--text); }
+
+  .topbar-title {
+    font-family: var(--display);
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+  }
+
+  .timer-badge {
+    font-size: 12px;
+    color: var(--amber);
+    background: var(--amber-dim);
+    border: 1px solid rgba(245,166,35,0.2);
+    padding: 4px 10px;
+    border-radius: 6px;
+  }
+
+  /* Amount strip */
+  .amount-strip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .amount-strip-left { }
+  .amount-strip-label { font-size: 11px; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 3px; }
+
+  .amount-strip-value {
+    font-family: var(--display);
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -0.8px;
+  }
+
+  .amount-equiv {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  .amount-equiv span { color: var(--green); }
+
+  /* Token selector */
+  .token-tabs {
+    display: flex;
+    gap: 6px;
+    padding: 10px 20px;
+    flex-shrink: 0;
+  }
+
+  .token-tab {
+    padding: 5px 14px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .token-tab.active {
+    background: var(--surface-2);
+    border-color: rgba(255,255,255,0.12);
+    color: var(--text);
+  }
+
+  /* QR Area */
+  .qr-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 16px 20px;
+    gap: 16px;
+    min-height: 0;
+    position: relative;
+  }
+
+  /* QR frame */
+  .qr-frame {
+    position: relative;
+    background: #fff;
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.06), 0 24px 48px rgba(0,0,0,0.4);
+  }
+
+  .qr-corners::before, .qr-corners::after,
+  .qr-frame::before, .qr-frame::after {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border-color: var(--amber);
+    border-style: solid;
+  }
+
+  .qr-frame::before { top: -2px; left: -2px; border-width: 3px 0 0 3px; border-radius: 4px 0 0 0; }
+  .qr-frame::after  { top: -2px; right: -2px; border-width: 3px 3px 0 0; border-radius: 0 4px 0 0; }
+  .qr-corners::before { bottom: -2px; left: -2px; border-width: 0 0 3px 3px; border-radius: 0 0 0 4px; }
+  .qr-corners::after  { bottom: -2px; right: -2px; border-width: 0 3px 3px 0; border-radius: 0 0 4px 0; }
+
+  #qr-canvas { display: block; }
+
+  /* Logo overlay in QR center */
+  .qr-logo {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 32px; height: 32px;
+    background: var(--amber);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 3px solid #fff;
+  }
+
+  /* Scan ring animation */
+  .scan-ring {
+    position: absolute;
+    inset: -8px;
+    border-radius: 20px;
+    border: 2px solid transparent;
+    border-top-color: var(--amber);
+    animation: spin 2.5s linear infinite;
+    pointer-events: none;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Address copy row */
+  .address-row {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .address-text {
+    flex: 1;
+    font-size: 11px;
+    color: var(--muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    letter-spacing: 0.04em;
+  }
+
+  .copy-btn {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 5px 10px;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 11px;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.15s;
+  }
+
+  .copy-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.15); }
+  .copy-btn.copied { color: var(--green); border-color: rgba(34,197,94,0.3); background: var(--green-dim); }
+
+  /* Status row */
+  .status-bar {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 20px 12px;
+  }
+
+  .status-pill {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 12px;
+    color: var(--muted);
+    flex: 1;
+    justify-content: center;
+  }
+
+  .status-spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255,255,255,0.1);
+    border-top-color: var(--amber);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    flex-shrink: 0;
+  }
+
+  .status-blocks {
+    display: flex;
+    gap: 3px;
+  }
+
+  .block {
+    width: 14px;
+    height: 14px;
+    border-radius: 2px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    transition: all 0.3s;
+  }
+
+  .block.filled { background: var(--amber); border-color: var(--amber); }
+  .block.confirmed { background: var(--green); border-color: var(--green); }
+
+  /* === SUCCESS OVERLAY === */
+  .success-overlay {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 32px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+  }
+
+  .success-overlay.visible {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .check-circle {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    background: var(--green-dim);
+    border: 2px solid var(--green);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 24px;
+    animation: popIn 0.5s cubic-bezier(0.17,0.89,0.32,1.3) both;
+  }
+
+  @keyframes popIn {
+    from { transform: scale(0.5); opacity: 0; }
+    to   { transform: scale(1); opacity: 1; }
+  }
+
+  .check-svg path {
+    stroke-dasharray: 60;
+    stroke-dashoffset: 60;
+    animation: drawCheck 0.5s 0.3s ease forwards;
+  }
+
+  @keyframes drawCheck {
+    to { stroke-dashoffset: 0; }
+  }
+
+  .success-title {
+    font-family: var(--display);
+    font-size: 32px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    text-align: center;
+    margin-bottom: 8px;
+  }
+
+  .success-title span { color: var(--green); }
+
+  .success-sub {
+    font-size: 14px;
+    color: var(--muted);
+    text-align: center;
+    line-height: 1.6;
+    margin-bottom: 32px;
+  }
+
+  .success-details {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 24px;
+  }
+
+  .detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    font-size: 13px;
+  }
+
+  .detail-row:not(:last-child) { border-bottom: 1px solid var(--border); }
+  .detail-key { color: var(--muted); }
+  .detail-val { color: var(--text); }
+  .detail-val.green { color: var(--green); }
+
+  .done-btn {
+    width: 100%;
+    background: var(--amber);
+    border: none;
+    border-radius: 12px;
+    padding: 16px;
+    color: #0a0a0f;
+    font-family: var(--display);
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+  }
+
+  .done-btn:hover { opacity: 0.9; }
+  .done-btn:active { transform: scale(0.99); }
+
+  /* confetti */
+  .confetti-piece {
+    position: fixed;
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    animation: confettiFall linear both;
+    pointer-events: none;
+  }
+
+  @keyframes confettiFall {
+    from { transform: translateY(-10px) rotate(0deg); opacity: 1; }
+    to   { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Top bar -->
+<div class="topbar">
+  <a class="back-btn" href="terminal.html">← Back</a>
+  <div class="topbar-title">Awaiting Payment</div>
+  <div class="timer-badge" id="timer">15:00</div>
+</div>
+
+<!-- Amount -->
+<div class="amount-strip">
+  <div class="amount-strip-left">
+    <div class="amount-strip-label">Charge amount</div>
+    <div class="amount-strip-value" id="charge-display">₱ 0.00</div>
+    <div class="amount-equiv">≈ <span id="usd-equiv">0.00 USDC</span></div>
+  </div>
+</div>
+
+<!-- Token selector -->
+<div class="token-tabs">
+  <button class="token-tab active" onclick="setToken('USDC', 'Polygon', this)">USDC (Polygon)</button>
+  <button class="token-tab" onclick="setToken('USDT', 'Ethereum', this)">USDT (ETH)</button>
+  <button class="token-tab" onclick="setToken('USDT', 'Tron', this)">USDT (TRX)</button>
+</div>
+
+<!-- QR code area -->
+<div class="qr-area">
+  <div class="qr-frame" id="qr-wrapper">
+    <div class="qr-corners"></div>
+    <div id="qr-canvas"></div>
+    <div class="qr-logo">
+      <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+        <path d="M4 14L10 4L16 14" stroke="#0a0a0f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M6.5 10.5H13.5" stroke="#0a0a0f" stroke-width="2.5" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div class="scan-ring" id="scan-ring"></div>
+  </div>
+
+  <!-- Address -->
+  <div class="address-row">
+    <div class="address-text" id="wallet-addr">0x4A2f…e7C3</div>
+    <button class="copy-btn" id="copy-btn" onclick="copyAddress()">Copy</button>
+  </div>
+</div>
+
+<!-- Status bar -->
+<div class="status-bar">
+  <div class="status-pill" id="status-pill">
+    <div class="status-spinner" id="spinner"></div>
+    <span id="status-text">Listening for transaction…</span>
+  </div>
+  <div class="status-blocks">
+    <div class="block" id="b1"></div>
+    <div class="block" id="b2"></div>
+    <div class="block" id="b3"></div>
+  </div>
+</div>
+
+<!-- SUCCESS OVERLAY -->
+<div class="success-overlay" id="success-overlay">
+  <div class="check-circle">
+    <svg class="check-svg" width="40" height="40" viewBox="0 0 40 40" fill="none">
+      <path d="M10 21L17 28L30 13" stroke="#22c55e" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </div>
+  <h1 class="success-title">Payment<br/><span>Received</span></h1>
+  <p class="success-sub">Transaction confirmed onchain.<br/>Funds are in your wallet.</p>
+
+  <div class="success-details">
+    <div class="detail-row">
+      <span class="detail-key">Amount</span>
+      <span class="detail-val" id="s-amount">—</span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-key">Token</span>
+      <span class="detail-val" id="s-token">USDC</span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-key">Network</span>
+      <span class="detail-val" id="s-network">Polygon</span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-key">Tx Hash</span>
+      <span class="detail-val" id="s-tx" style="font-size:11px; color: var(--muted);">0x…</span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-key">Status</span>
+      <span class="detail-val green">✓ Confirmed</span>
+    </div>
+  </div>
+
+  <button class="done-btn" onclick="newPayment()">New Payment</button>
+</div>
+
+<script>
+  const WALLETS = {
+    'USDC-Polygon':  '0x4A2fE11c8D3bBc2fe892a69Fd8d5f5aA73e7C3',
+    'USDT-Ethereum': '0x9B3c1fD40aaE52BcA7ef1b236b12F0Eb4d8D2E1',
+    'USDT-Tron':     'TRX7kLm9QbVcX3aPd5GhyRn4WsJqUe2Mv6',
+  };
+
+  let currentToken = 'USDC';
+  let currentNetwork = 'Polygon';
+  let timerSec = 900;
+  let timerInterval;
+  let simulationTimeout;
+
+  // Pull values from session or use demo values
+  const rawAmount = sessionStorage.getItem('chargeAmount') || '500';
+  const rawUSD    = sessionStorage.getItem('chargeUSD') || '8.91';
+  const rawCur    = sessionStorage.getItem('chargeCurrency') || 'PHP';
+  const syms = { PHP: '₱', USD: '$', NGN: '₦' };
+  const sym = syms[rawCur] || '₱';
+
+  document.getElementById('charge-display').textContent = sym + ' ' + parseFloat(rawAmount).toLocaleString();
+  document.getElementById('usd-equiv').textContent = rawUSD + ' USDC';
+  document.getElementById('s-amount').textContent = rawUSD + ' USDC';
+
+  function getWalletKey() { return `${currentToken}-${currentNetwork}`; }
+
+  function setToken(token, network, btn) {
+    currentToken = token;
+    currentNetwork = network;
+    document.querySelectorAll('.token-tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('usd-equiv').textContent = rawUSD + ' ' + token;
+    document.getElementById('s-token').textContent = token;
+    document.getElementById('s-network').textContent = network;
+    buildQR();
+    updateAddress();
+  }
+
+  function updateAddress() {
+    const addr = WALLETS[getWalletKey()] || WALLETS['USDC-Polygon'];
+    const short = addr.slice(0, 8) + '…' + addr.slice(-4);
+    document.getElementById('wallet-addr').textContent = short;
+    document.getElementById('wallet-addr').dataset.full = addr;
+  }
+
+  function buildQR() {
+    const container = document.getElementById('qr-canvas');
+    container.innerHTML = '';
+    const addr = WALLETS[getWalletKey()] || WALLETS['USDC-Polygon'];
+    const payload = `ethereum:${addr}?value=${rawUSD}&token=${currentToken}&network=${currentNetwork}`;
+    new QRCode(container, {
+      text: payload,
+      width: 200,
+      height: 200,
+      colorDark: '#000000',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.H,
+    });
+  }
+
+  function copyAddress() {
+    const addr = document.getElementById('wallet-addr').dataset.full
+      || document.getElementById('wallet-addr').textContent;
+    navigator.clipboard.writeText(addr).catch(() => {});
+    const btn = document.getElementById('copy-btn');
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+  }
+
+  // Countdown timer
+  function startTimer() {
+    timerInterval = setInterval(() => {
+      timerSec--;
+      if (timerSec <= 0) { clearInterval(timerInterval); document.getElementById('timer').textContent = 'Expired'; return; }
+      const m = Math.floor(timerSec / 60).toString().padStart(2, '0');
+      const s = (timerSec % 60).toString().padStart(2, '0');
+      document.getElementById('timer').textContent = `${m}:${s}`;
+      if (timerSec <= 60) document.getElementById('timer').style.color = '#e24b4a';
+    }, 1000);
+  }
+
+  // Simulate blockchain confirmation flow
+  function simulatePayment() {
+    // After random delay (5–12s), simulate tx detection
+    const delay = 5000 + Math.random() * 7000;
+
+    simulationTimeout = setTimeout(() => {
+      // Stage 1: tx seen in mempool
+      document.getElementById('status-text').textContent = 'Transaction detected in mempool…';
+      document.getElementById('b1').classList.add('filled');
+
+      setTimeout(() => {
+        document.getElementById('status-text').textContent = 'Waiting for block confirmation…';
+        document.getElementById('b2').classList.add('filled');
+
+        setTimeout(() => {
+          document.getElementById('status-text').textContent = 'Block confirmed!';
+          document.getElementById('b3').classList.add('filled');
+          document.getElementById('b1').classList.add('confirmed');
+          document.getElementById('b2').classList.add('confirmed');
+          document.getElementById('b3').classList.add('confirmed');
+
+          // Stop scanner ring
+          document.getElementById('scan-ring').style.animationPlayState = 'paused';
+          document.getElementById('scan-ring').style.borderTopColor = 'var(--green)';
+
+          const fakeTx = '0x' + Array.from({length:16},()=>Math.floor(Math.random()*16).toString(16)).join('') + '…';
+          document.getElementById('s-tx').textContent = fakeTx;
+
+          setTimeout(() => showSuccess(), 600);
+        }, 2500);
+      }, 2500);
+    }, delay);
+  }
+
+  function showSuccess() {
+    clearInterval(timerInterval);
+    const overlay = document.getElementById('success-overlay');
+    overlay.classList.add('visible');
+    launchConfetti();
+
+    // Save to ledger history
+    const history = JSON.parse(localStorage.getItem('payflow-history') || '[]');
+    history.unshift({
+      id: Date.now(),
+      timestamp: new Date().toISOString(),
+      fiatAmount: parseFloat(rawAmount),
+      fiatCurrency: rawCur,
+      usdAmount: parseFloat(rawUSD),
+      token: currentToken,
+      network: currentNetwork,
+      status: 'confirmed',
+    });
+    localStorage.setItem('payflow-history', JSON.stringify(history.slice(0, 100)));
+  }
+
+  function launchConfetti() {
+    const colors = ['#f5a623', '#22c55e', '#fff', '#f5a623'];
+    for (let i = 0; i < 40; i++) {
+      const el = document.createElement('div');
+      el.className = 'confetti-piece';
+      el.style.cssText = `
+        left: ${Math.random() * 100}vw;
+        top: ${-10 - Math.random() * 20}px;
+        background: ${colors[Math.floor(Math.random() * colors.length)]};
+        animation-duration: ${1.5 + Math.random() * 1.5}s;
+        animation-delay: ${Math.random() * 0.5}s;
+        width: ${6 + Math.random() * 8}px;
+        height: ${6 + Math.random() * 8}px;
+        border-radius: ${Math.random() > 0.5 ? '50%' : '2px'};
+      `;
+      document.body.appendChild(el);
+      el.addEventListener('animationend', () => el.remove());
+    }
+  }
+
+  function newPayment() {
+    clearTimeout(simulationTimeout);
+    window.location.href = 'terminal.html';
+  }
+
+  // Init
+  updateAddress();
+  buildQR();
+  startTimer();
+  simulatePayment();
+</script>
+</body>
+</html>
