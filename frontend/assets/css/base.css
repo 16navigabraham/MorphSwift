@@ -152,8 +152,8 @@ a:hover { opacity: 0.8; }
   position: fixed;
   inset: 0;
   background-image:
-    linear-gradient(rgba(245, 166, 35, 0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(245, 166, 35, 0.025) 1px, transparent 1px);
+    linear-gradient(rgba(27, 229, 0, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(27, 229, 0, 0.04) 1px, transparent 1px);
   background-size: 48px 48px;
   pointer-events: none;
   z-index: 0;

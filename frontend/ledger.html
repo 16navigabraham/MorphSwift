@@ -13,14 +13,14 @@
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
-    --bg: #0a0a0f;
-    --surface: #111118;
-    --surface-2: #1a1a24;
-    --surface-3: #222233;
+    --bg: #0E0E11;
+    --surface: #141418;
+    --surface-2: #1c1c22;
+    --surface-3: #25252e;
     --border: rgba(255,255,255,0.07);
     --border-2: rgba(255,255,255,0.04);
-    --amber: #f5a623;
-    --amber-dim: rgba(245,166,35,0.10);
+    --amber: #1BE500;
+    --amber-dim: rgba(27, 229, 0, 0.12);
     --text: #f0ede8;
     --muted: #5c5b70;
     --muted-2: #2e2e3e;
@@ -295,7 +295,7 @@
   }
 
   .tx-icon.confirmed { background: var(--green-dim); color: var(--green); border: 1px solid rgba(34,197,94,0.15); }
-  .tx-icon.pending   { background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(245,166,35,0.15); }
+  .tx-icon.pending   { background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(27, 229, 0,0.15); }
   .tx-icon.failed    { background: rgba(226,75,74,0.1); color: var(--red); border: 1px solid rgba(226,75,74,0.15); }
   .tx-icon.withdrawn { background: var(--surface-2); color: var(--muted); border: 1px solid var(--border); }
 
@@ -412,7 +412,7 @@
 
   .nav-btn.active {
     color: var(--amber);
-    border-color: rgba(245,166,35,0.3);
+    border-color: rgba(27, 229, 0,0.3);
     background: var(--amber-dim);
   }
 
@@ -491,7 +491,7 @@
   }
 
   .modal-input::placeholder { color: var(--muted-2); }
-  .modal-input:focus { border-color: rgba(245,166,35,0.4); }
+  .modal-input:focus { border-color: rgba(27, 229, 0,0.4); }
 
   .modal-confirm-btn {
     width: 100%;

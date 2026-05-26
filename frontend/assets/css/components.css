@@ -346,7 +346,7 @@
 .notice--amber {
   background: var(--amber-dim);
   border: 1px solid var(--amber-border);
-  color: rgba(245, 166, 35, 0.85);
+  color: rgba(27, 229, 0, 0.9);
 }
 
 .notice--green {
@@ -396,8 +396,8 @@
   gap: 10px;
 }
 
-.key--charge:hover  { background: #f0a020; }
-.key--charge:active { background: #e09518; }
+.key--charge:hover  { background: #15CC00; }
+.key--charge:active { background: #12b800; }
 
 .key__num {
   font-family: var(--font-display);

@@ -94,7 +94,7 @@ Legacy `payflow-history` is read as a fallback when migrating existing browsers.
 
 | File | Purpose |
 |------|---------|
-| `manifest.json` | App name **MorphSwift POS**, theme `#f5a623`, start URL `onboarding.html` |
+| `manifest.json` | App name **MorphSwift POS**, theme `#1BE500`, start URL `onboarding.html` |
 | `sw.js` | Cache-first shell for HTML/CSS/icons (`morphswift-shell-v1`) |
 | `assets/icons/logo.svg`, `favicon.svg` | Brand mark |
 

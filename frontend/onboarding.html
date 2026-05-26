@@ -14,14 +14,14 @@
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
-    --bg: #0a0a0f;
-    --surface: #111118;
-    --surface-2: #1a1a24;
+    --bg: #0E0E11;
+    --surface: #141418;
+    --surface-2: #1c1c22;
     --border: rgba(255,255,255,0.07);
     --border-hover: rgba(255,255,255,0.15);
-    --amber: #f5a623;
-    --amber-dim: rgba(245,166,35,0.12);
-    --amber-glow: rgba(245,166,35,0.06);
+    --amber: #1BE500;
+    --amber-dim: rgba(27, 229, 0, 0.12);
+    --amber-glow: rgba(27, 229, 0, 0.08);
     --text: #f0ede8;
     --muted: #6b6980;
     --muted-2: #3e3d4e;
@@ -52,14 +52,14 @@
     position: fixed;
     inset: 0;
     background-image:
-      linear-gradient(rgba(245,166,35,0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(245,166,35,0.03) 1px, transparent 1px);
+      linear-gradient(rgba(27, 229, 0,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(27, 229, 0,0.03) 1px, transparent 1px);
     background-size: 48px 48px;
     pointer-events: none;
     z-index: 0;
   }
 
-  /* Amber vignette top */
+  /* Brand vignette top */
   body::after {
     content: '';
     position: fixed;
@@ -68,7 +68,7 @@
     transform: translateX(-50%);
     width: 600px;
     height: 400px;
-    background: radial-gradient(ellipse at center, rgba(245,166,35,0.08) 0%, transparent 70%);
+    background: radial-gradient(ellipse at center, rgba(27, 229, 0,0.08) 0%, transparent 70%);
     pointer-events: none;
     z-index: 0;
   }
@@ -123,7 +123,7 @@
     font-size: 10px;
     font-family: var(--mono);
     color: var(--amber);
-    border: 1px solid rgba(245,166,35,0.3);
+    border: 1px solid rgba(27, 229, 0,0.3);
     padding: 3px 8px;
     border-radius: 4px;
     letter-spacing: 0.08em;
@@ -248,7 +248,7 @@
   }
 
   .input::placeholder { color: var(--muted-2); }
-  .input:focus { border-color: rgba(245,166,35,0.4); }
+  .input:focus { border-color: rgba(27, 229, 0,0.4); }
 
   .btn-send {
     padding: 13px 18px;
@@ -273,11 +273,11 @@
     align-items: flex-start;
     gap: 10px;
     background: var(--amber-dim);
-    border: 1px solid rgba(245,166,35,0.15);
+    border: 1px solid rgba(27, 229, 0,0.15);
     border-radius: 10px;
     padding: 14px 16px;
     font-size: 12px;
-    color: rgba(245,166,35,0.8);
+    color: rgba(27, 229, 0,0.8);
     line-height: 1.5;
   }
 
@@ -396,8 +396,8 @@
 
   <div class="security-note">
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-      <path d="M8 1.5L2 4v4c0 3.31 2.56 6.4 6 7 3.44-.6 6-3.69 6-7V4L8 1.5z" stroke="rgba(245,166,35,0.8)" stroke-width="1.25" stroke-linejoin="round"/>
-      <path d="M5.5 8l1.75 1.75L10.5 6" stroke="rgba(245,166,35,0.8)" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M8 1.5L2 4v4c0 3.31 2.56 6.4 6 7 3.44-.6 6-3.69 6-7V4L8 1.5z" stroke="rgba(27, 229, 0,0.8)" stroke-width="1.25" stroke-linejoin="round"/>
+      <path d="M5.5 8l1.75 1.75L10.5 6" stroke="rgba(27, 229, 0,0.8)" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>
     Cryptographic keys are generated client-side via Magic SDK. Your funds are non-custodial and only accessible by you.
   </div>
