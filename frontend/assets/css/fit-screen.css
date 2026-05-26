@@ -130,10 +130,79 @@ body.page-ledger .modal-backdrop.open {
   overflow: hidden;
 }
 
+/* ── Terminal: keypad fills remaining viewport ─────────────── */
+body.page-terminal .app-content {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+body.page-terminal .topbar,
+body.page-terminal .currency-row,
+body.page-terminal .amount-area,
+body.page-terminal .conversion-card,
+body.page-terminal .bottom-bar {
+  flex-shrink: 0;
+}
+
+body.page-terminal .amount-area {
+  padding: clamp(4px, 1vmin, 8px) 16px clamp(6px, 1.2vmin, 12px);
+}
+
+body.page-terminal .conversion-card {
+  margin: 0 12px clamp(4px, 1vmin, 8px);
+  padding: clamp(8px, 1.8vmin, 12px) clamp(10px, 2vmin, 14px);
+}
+
+body.page-terminal .sc-amount {
+  font-size: clamp(13px, 3.2vw, 16px);
+}
+
+body.page-terminal .keypad {
+  flex: 1 1 0;
+  min-height: 0;
+  grid-template-rows: repeat(4, minmax(0, 1fr));
+}
+
+body.page-terminal .key {
+  min-height: 0;
+}
+
+@media (max-height: 600px) {
+  body.page-terminal .key-sub {
+    display: none;
+  }
+
+  body.page-terminal .amount-label,
+  body.page-terminal .conversion-label,
+  body.page-terminal .sc-network {
+    font-size: 10px;
+  }
+
+  body.page-terminal .stablecoin-chip {
+    padding: 6px 8px;
+  }
+}
+
+@media (max-height: 520px) {
+  body.page-terminal .conversion-top {
+    margin-bottom: 6px;
+  }
+
+  body.page-terminal .amount-currency {
+    font-size: clamp(18px, 4vw, 24px);
+  }
+}
+
 /* ── Sender: fit + narration layout ────────────────────────── */
 body.page-sender .sender-main {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
   overflow: hidden !important;
   justify-content: space-between;
+  align-items: center;
+  text-align: center;
   padding: clamp(8px, 2vmin, 16px) 16px;
   gap: clamp(6px, 1.5vmin, 12px);
 }
@@ -153,6 +222,7 @@ body.page-sender .sender-stack {
   max-width: 360px;
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: clamp(6px, 1.2vmin, 10px);
   overflow: hidden;
 }
@@ -174,8 +244,13 @@ body.page-sender .receipt-scroll {
 }
 
 body.page-sender .receipt-row {
-  padding: clamp(5px, 1vmin, 7px) 0;
-  font-size: clamp(11px, 2.8vw, 13px);
+  padding: clamp(4px, 0.9vmin, 6px) 0;
+  font-size: clamp(10px, 2.4vw, 12px);
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 2px;
 }
 
 body.page-sender .check-circle {
@@ -185,32 +260,36 @@ body.page-sender .check-circle {
 }
 
 body.page-sender .sender-title {
-  font-size: clamp(20px, 5.5vw, 32px);
+  font-size: clamp(18px, 4.8vw, 28px);
   margin-bottom: 4px;
 }
 
 body.page-sender .sender-sub {
-  font-size: clamp(11px, 2.8vw, 14px);
+  font-size: clamp(10px, 2.5vw, 13px);
   margin-bottom: 0;
   line-height: 1.4;
+  max-width: 28em;
 }
 
 body.page-sender .status-banner {
   margin-bottom: 0;
-  padding: 8px 12px;
-  font-size: 11px;
+  padding: clamp(6px, 1.2vmin, 8px) 12px;
+  font-size: clamp(9px, 2.2vw, 11px);
   flex-shrink: 0;
+  justify-content: center;
+  text-align: center;
+  width: 100%;
 }
 
 body.page-sender .narration-block {
   flex-shrink: 0;
   width: 100%;
-  text-align: left;
+  text-align: center;
 }
 
 body.page-sender .narration-label {
   display: block;
-  font-size: 10px;
+  font-size: clamp(9px, 2vw, 10px);
   color: var(--muted, #5c5b70);
   letter-spacing: 0.07em;
   text-transform: uppercase;
@@ -219,18 +298,19 @@ body.page-sender .narration-label {
 
 body.page-sender .narration-input {
   width: 100%;
-  min-height: 2.75rem;
-  max-height: 4.5rem;
+  min-height: 2.5rem;
+  max-height: 4rem;
   resize: none;
   background: var(--surface-2, #1c1c22);
   border: 1px solid var(--border, rgba(255,255,255,0.07));
   border-radius: 10px;
-  padding: 10px 12px;
+  padding: clamp(8px, 1.5vmin, 10px) 12px;
   color: var(--text, #f0ede8);
   font-family: var(--mono, 'DM Mono', monospace);
-  font-size: 13px;
+  font-size: clamp(11px, 2.8vw, 13px);
   line-height: 1.4;
   outline: none;
+  text-align: center;
 }
 
 body.page-sender .narration-input::placeholder {
@@ -309,14 +389,28 @@ body.page-sender .check-circle {
 
 body.page-sender .receipt-row {
   display: flex;
-  justify-content: space-between;
-  gap: 12px;
   border-bottom: 1px solid rgba(255,255,255,0.07);
 }
 
 body.page-sender .receipt-row:last-child { border-bottom: none; }
-body.page-sender .receipt-key { color: #5c5b70; flex-shrink: 0; }
-body.page-sender .receipt-val { font-weight: 500; text-align: right; word-break: break-all; }
+body.page-sender .receipt-key {
+  color: #5c5b70;
+  flex-shrink: 0;
+  font-size: clamp(9px, 2vw, 10px);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+body.page-sender .receipt-val {
+  font-weight: 500;
+  text-align: center;
+  word-break: break-word;
+  font-size: clamp(10px, 2.6vw, 12px);
+}
+
+body.page-sender .receipt-val.mono {
+  font-size: clamp(9px, 2.2vw, 10px);
+  max-width: 100%;
+}
 
 body.page-sender .status-banner {
   display: flex;

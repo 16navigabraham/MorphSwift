@@ -145,7 +145,7 @@ body.page-terminal .cursor-blink {
 }
 
 body.page-terminal .key {
-  min-height: clamp(40px, 9dvh, 64px);
+  min-height: 0;
 }
 
 body.page-terminal .currency-row {
@@ -368,8 +368,8 @@ body.page-checkout .success-details {
   }
 
   body.page-terminal .keypad {
-    flex: 1 1 auto;
-    min-height: 120px;
+    flex: 1 1 0;
+    min-height: 0;
   }
 }
 
