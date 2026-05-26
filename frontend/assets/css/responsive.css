@@ -220,8 +220,13 @@ body.page-sender .sender-main {
   }
 
   body.page-sender .check-circle {
-    width: 64px;
-    height: 64px;
+    --check-size: 56px;
+    width: var(--check-size);
+    height: var(--check-size);
+    min-width: var(--check-size);
+    min-height: var(--check-size);
+    max-width: var(--check-size);
+    max-height: var(--check-size);
     margin-bottom: 12px;
   }
 
