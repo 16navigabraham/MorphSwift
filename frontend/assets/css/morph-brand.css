@@ -1,0 +1,151 @@
+/* ============================================================
+   Morph Network brand — sourced from morph.network
+   Primary: #1BE500 / #18C900 · Surface: #0E0E11
+   Load after page inline styles.
+   ============================================================ */
+
+:root {
+  --morph-green:       #1BE500;
+  --morph-green-deep:  #18C900;
+  --morph-green-hover: #15CC00;
+  --morph-green-dim:   rgba(27, 229, 0, 0.12);
+  --morph-green-glow:  rgba(27, 229, 0, 0.08);
+  --morph-green-border:rgba(27, 229, 0, 0.28);
+  --morph-bg:          #0E0E11;
+  --morph-surface:     #141418;
+  --morph-surface-2:   #1c1c22;
+  --morph-surface-3:   #25252e;
+  --morph-on-primary:  #0E0E11;
+
+  /* Map legacy token names used across POS pages */
+  --bg:           var(--morph-bg);
+  --surface:      var(--morph-surface);
+  --surface-2:    var(--morph-surface-2);
+  --surface-3:    var(--morph-surface-3);
+  --amber:        var(--morph-green);
+  --amber-dim:    var(--morph-green-dim);
+  --amber-glow:   var(--morph-green-glow);
+  --amber-border: var(--morph-green-border);
+  --green:        var(--morph-green);
+  --green-dim:    var(--morph-green-dim);
+}
+
+/* ── Logo lockup (Morph wordmark + Swift product) ──────────── */
+.brand-lockup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: inherit;
+  min-width: 0;
+}
+
+.brand-lockup__morph {
+  height: 22px;
+  width: auto;
+  max-width: 88px;
+  flex-shrink: 0;
+  display: block;
+}
+
+.brand-lockup__product {
+  font-family: var(--display, 'Syne', sans-serif);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  color: var(--text, #f0ede8);
+  white-space: nowrap;
+}
+
+.brand-lockup__product em {
+  font-style: normal;
+  color: var(--morph-green);
+}
+
+.logo-mark img,
+.logo-mark .morph-icon {
+  width: 36px;
+  height: auto;
+  display: block;
+}
+
+/* ── Powered by Morph Network ──────────────────────────────── */
+.powered-by {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 16px 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  background: linear-gradient(180deg, transparent 0%, rgba(27, 229, 0, 0.03) 100%);
+}
+
+.powered-by a {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: var(--muted, #5c5b70);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.powered-by a:hover {
+  color: var(--morph-green);
+}
+
+.powered-by img {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.powered-by strong {
+  font-weight: 500;
+  color: rgba(240, 237, 232, 0.85);
+}
+
+body.page-onboarding .powered-by {
+  border-top: none;
+  background: none;
+  padding: 20px 0 8px;
+  width: 100%;
+  max-width: min(var(--app-max-w, 420px), 100%);
+}
+
+/* QR center mark */
+body.page-checkout .qr-logo {
+  background: #ffffff;
+  box-shadow: 0 0 0 1px rgba(27, 229, 0, 0.15);
+}
+
+.qr-logo img {
+  width: 22px;
+  height: auto;
+  display: block;
+}
+
+body.page-onboarding .logo-mark {
+  background: var(--morph-surface-2);
+  border: 1px solid var(--morph-green-border);
+}
+
+body.page-terminal .key.key-charge:hover {
+  background: var(--morph-green-hover) !important;
+}
+
+body.page-terminal .key.key-charge:active {
+  background: #12b800 !important;
+}
+
+/* Onboarding atmospheric accents */
+body.page-onboarding::before {
+  background-image:
+    linear-gradient(rgba(27, 229, 0, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(27, 229, 0, 0.04) 1px, transparent 1px);
+}
+
+body.page-onboarding::after {
+  background: radial-gradient(ellipse at center, rgba(27, 229, 0, 0.1) 0%, transparent 70%);
+}

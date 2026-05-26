@@ -7,6 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="assets/css/responsive.css" />
+<link rel="stylesheet" href="assets/css/morph-brand.css" />
+<link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml" />
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -57,7 +59,7 @@
     letter-spacing: -0.4px;
   }
 
-  .logo span { color: var(--amber); }
+  .logo { display: none; }
 
   .merchant-pill {
     display: flex;
@@ -386,7 +388,10 @@
 
 <!-- Top bar -->
 <div class="topbar">
-  <div class="logo">Morph<span>Swift</span></div>
+  <a href="onboarding.html" class="brand-lockup">
+    <img src="assets/icons/morph-logo.svg" alt="Morph" class="brand-lockup__morph" />
+    <span class="brand-lockup__product"><em>Swift</em></span>
+  </a>
   <div class="merchant-pill">
     <div class="merchant-avatar">MG</div>
     MG Store
@@ -497,10 +502,17 @@
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M2 8h8M2 12h10" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/></svg>
     Ledger
   </a>
-  <button class="nav-btn" onclick="chargeNow()" style="margin-left: auto; background: var(--amber); border-color: var(--amber); color: #0a0a0f; padding: 8px 20px; font-size: 13px;">
+  <button class="nav-btn" onclick="chargeNow()" style="margin-left: auto; background: var(--amber); border-color: var(--amber); color: var(--morph-on-primary, #0E0E11); padding: 8px 20px; font-size: 13px;">
     Charge →
   </button>
 </div>
+
+<footer class="powered-by">
+  <a href="https://morph.network" target="_blank" rel="noopener noreferrer" title="Morph Network">
+    <img src="assets/icons/morph-icon.svg" alt="" width="14" height="14" />
+    <span>Powered by <strong>Morph Network</strong></span>
+  </a>
+</footer>
 
 <script>
   const rates = {

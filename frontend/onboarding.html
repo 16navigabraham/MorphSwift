@@ -8,6 +8,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="assets/css/responsive.css" />
+<link rel="stylesheet" href="assets/css/morph-brand.css" />
+<link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml" />
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -113,7 +115,7 @@
     color: var(--text);
   }
 
-  .logo-text span { color: var(--amber); }
+  .logo-text em { color: var(--amber); font-style: normal; }
 
   /* Badge */
   .badge {
@@ -350,12 +352,9 @@
 
   <div class="logo-row">
     <div class="logo-mark">
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-        <path d="M4 14L10 4L16 14" stroke="#0a0a0f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M6.5 10.5H13.5" stroke="#0a0a0f" stroke-width="2.5" stroke-linecap="round"/>
-      </svg>
+      <img src="assets/icons/morph-icon.svg" alt="" class="morph-icon" width="36" height="25" />
     </div>
-    <span class="logo-text">Morph<span>Swift</span></span>
+    <span class="logo-text">Morph<em>Swift</em></span>
     <span class="badge">Merchant</span>
   </div>
 
@@ -408,6 +407,13 @@
     <span class="status-item"><span class="dot"></span> USDC / USDT</span>
     <span class="status-item"><span class="dot"></span> Non-custodial</span>
   </div>
+
+  <footer class="powered-by">
+    <a href="https://morph.network" target="_blank" rel="noopener noreferrer" title="Morph Network">
+      <img src="assets/icons/morph-icon.svg" alt="" width="14" height="14" />
+      <span>Powered by <strong>Morph Network</strong></span>
+    </a>
+  </footer>
 
 </div>
 

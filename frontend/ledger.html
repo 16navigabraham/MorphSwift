@@ -7,6 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="assets/css/responsive.css" />
+<link rel="stylesheet" href="assets/css/morph-brand.css" />
+<link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml" />
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -58,7 +60,7 @@
     letter-spacing: -0.4px;
   }
 
-  .logo span { color: var(--amber); }
+  .logo { display: none; }
 
   .topbar-actions { display: flex; gap: 8px; }
 
@@ -524,7 +526,10 @@
 
 <!-- Topbar -->
 <div class="topbar">
-  <div class="logo">Morph<span>Swift</span></div>
+  <a href="terminal.html" class="brand-lockup">
+    <img src="assets/icons/morph-logo.svg" alt="Morph" class="brand-lockup__morph" />
+    <span class="brand-lockup__product"><em>Swift</em></span>
+  </a>
   <div class="topbar-actions">
     <button class="icon-btn" title="Export CSV" onclick="exportCSV()">↓</button>
     <a class="icon-btn" href="terminal.html" title="New Payment">+</a>
@@ -588,6 +593,13 @@
     Ledger
   </a>
 </div>
+
+<footer class="powered-by">
+  <a href="https://morph.network" target="_blank" rel="noopener noreferrer" title="Morph Network">
+    <img src="assets/icons/morph-icon.svg" alt="" width="14" height="14" />
+    <span>Powered by <strong>Morph Network</strong></span>
+  </a>
+</footer>
 
 <!-- Withdraw modal -->
 <div class="modal-backdrop" id="modal">

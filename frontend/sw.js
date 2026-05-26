@@ -11,6 +11,9 @@ const SHELL = [
   './assets/css/base.css',
   './assets/css/components.css',
   './assets/css/responsive.css',
+  './assets/css/morph-brand.css',
+  './assets/icons/morph-logo.svg',
+  './assets/icons/morph-icon.svg',
   './assets/icons/logo.svg',
   './assets/icons/favicon.svg',
 ];

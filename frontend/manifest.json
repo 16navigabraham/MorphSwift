@@ -6,11 +6,11 @@
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#0a0a0f",
-  "theme_color": "#f5a623",
+  "background_color": "#0E0E11",
+  "theme_color": "#1BE500",
   "icons": [
     {
-      "src": "./assets/icons/logo.svg",
+      "src": "./assets/icons/morph-icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"

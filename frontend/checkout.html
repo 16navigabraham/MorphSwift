@@ -7,6 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="assets/css/responsive.css" />
+<link rel="stylesheet" href="assets/css/morph-brand.css" />
+<link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -442,10 +444,7 @@
     <div class="qr-corners"></div>
     <div id="qr-canvas"></div>
     <div class="qr-logo">
-      <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
-        <path d="M4 14L10 4L16 14" stroke="#0a0a0f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M6.5 10.5H13.5" stroke="#0a0a0f" stroke-width="2.5" stroke-linecap="round"/>
-      </svg>
+      <img src="assets/icons/morph-icon.svg" alt="Morph" width="22" height="16" />
     </div>
     <div class="scan-ring" id="scan-ring"></div>
   </div>
@@ -470,6 +469,13 @@
   </div>
 </div>
 
+<footer class="powered-by">
+  <a href="https://morph.network" target="_blank" rel="noopener noreferrer" title="Morph Network">
+    <img src="assets/icons/morph-icon.svg" alt="" width="14" height="14" />
+    <span>Powered by <strong>Morph Network</strong></span>
+  </a>
+</footer>
+
 <!-- SUCCESS OVERLAY -->
 <div class="success-overlay" id="success-overlay">
   <div class="check-circle">
@@ -478,7 +484,7 @@
     </svg>
   </div>
   <h1 class="success-title">Payment<br/><span>Received</span></h1>
-  <p class="success-sub">Transaction confirmed onchain.<br/>Funds are in your wallet.</p>
+  <p class="success-sub">Transaction confirmed onchain.<br/>Funds are in your wallet.<br/><span style="font-size:11px;opacity:0.7">Settled via Morph Network</span></p>
 
   <div class="success-details">
     <div class="detail-row">
@@ -662,7 +668,7 @@
   }
 
   function launchConfetti() {
-    const colors = ['#f5a623', '#22c55e', '#fff', '#f5a623'];
+    const colors = ['#1BE500', '#18C900', '#fff', '#1BE500'];
     for (let i = 0; i < 40; i++) {
       const el = document.createElement('div');
       el.className = 'confetti-piece';

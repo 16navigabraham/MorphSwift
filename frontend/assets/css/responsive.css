@@ -26,6 +26,7 @@ body.app-shell {
   height: 100dvh;
   max-height: 100dvh;
   overflow: hidden;
+  background: var(--morph-bg, var(--bg));
   padding:
     var(--safe-top)
     max(var(--safe-right), 0px)
@@ -115,6 +116,14 @@ body.page-terminal .currency-row {
 }
 
 @media (max-height: 520px) {
+  .powered-by {
+    padding: 4px 12px 6px;
+  }
+
+  .powered-by a {
+    font-size: 9px;
+  }
+
   body.page-terminal .topbar,
   body.page-terminal .currency-row {
     padding-top: 8px;
