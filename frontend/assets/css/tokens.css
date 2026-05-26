@@ -68,7 +68,8 @@
   --z-modal:   100;
 
   /* ── Network / chain ─────────────────────────────────────── */
-  --polygon-color:  #8247e5;
-  --ethereum-color: #627eea;
-  --tron-color:     #eb0029;
+  --morph-color:    #1BE500;
+  --polygon-color:  var(--morph-color);
+  --ethereum-color: var(--morph-color);
+  --tron-color:     var(--morph-color);
 }

@@ -415,6 +415,8 @@
 </head>
 <body class="app-shell page-checkout">
 
+<div class="app-content">
+
 <!-- Top bar -->
 <div class="topbar">
   <a class="back-btn" href="terminal.html">← Back</a>
@@ -433,9 +435,9 @@
 
 <!-- Token selector -->
 <div class="token-tabs">
-  <button class="token-tab active" onclick="setToken('USDC', 'Polygon', this)">USDC (Polygon)</button>
-  <button class="token-tab" onclick="setToken('USDT', 'Ethereum', this)">USDT (ETH)</button>
-  <button class="token-tab" onclick="setToken('USDT', 'Tron', this)">USDT (TRX)</button>
+  <button class="token-tab active" onclick="setToken('USDC', 'Morph', this)">USDC</button>
+  <button class="token-tab" onclick="setToken('USDT', 'Morph', this)">USDT</button>
+  <button class="token-tab" onclick="setToken('BGB', 'Morph', this)">BGB</button>
 </div>
 
 <!-- QR code area -->
@@ -469,6 +471,8 @@
   </div>
 </div>
 
+</div>
+
 <footer class="powered-by">
   <a href="https://morph.network" target="_blank" rel="noopener noreferrer" title="Morph Network">
     <img src="assets/icons/morph-icon.svg" alt="" width="14" height="14" />
@@ -497,7 +501,7 @@
     </div>
     <div class="detail-row">
       <span class="detail-key">Network</span>
-      <span class="detail-val" id="s-network">Polygon</span>
+      <span class="detail-val" id="s-network">Morph</span>
     </div>
     <div class="detail-row">
       <span class="detail-key">Tx Hash</span>
@@ -514,13 +518,13 @@
 
 <script>
   const WALLETS = {
-    'USDC-Polygon':  '0x4A2fE11c8D3bBc2fe892a69Fd8d5f5aA73e7C3',
-    'USDT-Ethereum': '0x9B3c1fD40aaE52BcA7ef1b236b12F0Eb4d8D2E1',
-    'USDT-Tron':     'TRX7kLm9QbVcX3aPd5GhyRn4WsJqUe2Mv6',
+    'USDC-Morph': '0x4A2fE11c8D3bBc2fe892a69Fd8d5f5aA73e7C3',
+    'USDT-Morph': '0x4A2fE11c8D3bBc2fe892a69Fd8d5f5aA73e7C3',
+    'BGB-Morph':  '0x4A2fE11c8D3bBc2fe892a69Fd8d5f5aA73e7C3',
   };
 
   let currentToken = 'USDC';
-  let currentNetwork = 'Polygon';
+  let currentNetwork = 'Morph';
   let timerSec = 900;
   let timerInterval;
   let simulationTimeout;
@@ -551,7 +555,7 @@
   }
 
   function updateAddress() {
-    const addr = WALLETS[getWalletKey()] || WALLETS['USDC-Polygon'];
+    const addr = WALLETS[getWalletKey()] || WALLETS['USDC-Morph'];
     const short = addr.slice(0, 8) + '…' + addr.slice(-4);
     document.getElementById('wallet-addr').textContent = short;
     document.getElementById('wallet-addr').dataset.full = addr;
@@ -568,8 +572,8 @@
   function buildQR() {
     const container = document.getElementById('qr-canvas');
     container.innerHTML = '';
-    const addr = WALLETS[getWalletKey()] || WALLETS['USDC-Polygon'];
-    const payload = `ethereum:${addr}?value=${rawUSD}&token=${currentToken}&network=${currentNetwork}`;
+    const addr = WALLETS[getWalletKey()] || WALLETS['USDC-Morph'];
+    const payload = `morph:${addr}?value=${rawUSD}&token=${currentToken}&network=Morph`;
     const size = qrPixelSize();
     new QRCode(container, {
       text: payload,

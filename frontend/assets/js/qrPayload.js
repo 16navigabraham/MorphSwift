@@ -43,7 +43,7 @@ export function decodeCheckoutPayload(encoded) {
 /**
  * Wallet-scan URI shown inside the QR (EIP-681 style for EVM chains).
  */
-export function buildPaymentUri({ address, amount, token = 'USDC', network = 'Polygon' }) {
+export function buildPaymentUri({ address, amount, token = 'USDC', network = 'Morph' }) {
   const value = Number(amount);
   const safeAmount = Number.isFinite(value) ? value : 0;
   return `ethereum:${address}?value=${safeAmount}&token=${token}&network=${network}`;

@@ -524,6 +524,8 @@
 </head>
 <body class="app-shell page-ledger">
 
+<div class="app-content">
+
 <!-- Topbar -->
 <div class="topbar">
   <a href="terminal.html" class="brand-lockup">
@@ -594,6 +596,8 @@
   </a>
 </div>
 
+</div>
+
 <footer class="powered-by">
   <a href="https://morph.network" target="_blank" rel="noopener noreferrer" title="Morph Network">
     <img src="assets/icons/morph-icon.svg" alt="" width="14" height="14" />
@@ -630,16 +634,16 @@
 
 <script>
   const DEMO_TXS = [
-    { id: 1001, timestamp: new Date(Date.now() - 1*60*60*1000).toISOString(), usdAmount: 12.50, fiatAmount: 701, fiatCurrency: 'PHP', token: 'USDC', network: 'Polygon', status: 'confirmed', hash: '0x4a2f…e7c3' },
-    { id: 1002, timestamp: new Date(Date.now() - 3*60*60*1000).toISOString(), usdAmount: 8.91, fiatAmount: 500, fiatCurrency: 'PHP', token: 'USDT', network: 'Tron', status: 'confirmed', hash: '0x9b3c…2e1d' },
-    { id: 1003, timestamp: new Date(Date.now() - 5*60*60*1000).toISOString(), usdAmount: 3.20, fiatAmount: 179, fiatCurrency: 'PHP', token: 'USDC', network: 'Polygon', status: 'pending', hash: '0x7f11…b4a9' },
-    { id: 1004, timestamp: new Date(Date.now() - 1*24*60*60*1000).toISOString(), usdAmount: 22.00, fiatAmount: 1234, fiatCurrency: 'PHP', token: 'USDC', network: 'Polygon', status: 'confirmed', hash: '0xce7a…19f2' },
-    { id: 1005, timestamp: new Date(Date.now() - 1*24*60*60*1000 - 2*60*60*1000).toISOString(), usdAmount: 5.75, fiatAmount: 322, fiatCurrency: 'PHP', token: 'USDT', network: 'Ethereum', status: 'confirmed', hash: '0x3d88…c5b0' },
-    { id: 1006, timestamp: new Date(Date.now() - 2*24*60*60*1000).toISOString(), usdAmount: 15.00, fiatAmount: 842, fiatCurrency: 'PHP', token: 'USDC', network: 'Polygon', status: 'confirmed', hash: '0x8e42…f3d1' },
-    { id: 1007, timestamp: new Date(Date.now() - 3*24*60*60*1000).toISOString(), usdAmount: 1.50, fiatAmount: 84, fiatCurrency: 'PHP', token: 'USDT', network: 'Tron', status: 'failed', hash: '0x2c19…77aa' },
-    { id: 1008, timestamp: new Date(Date.now() - 3*24*60*60*1000 - 4*60*60*1000).toISOString(), usdAmount: 30.00, fiatAmount: 1684, fiatCurrency: 'PHP', token: 'USDC', network: 'Polygon', status: 'confirmed', hash: '0xb771…0e5c' },
-    { id: 1009, timestamp: new Date(Date.now() - 4*24*60*60*1000).toISOString(), usdAmount: 18.40, fiatAmount: 1033, fiatCurrency: 'PHP', token: 'USDT', network: 'Ethereum', status: 'confirmed', hash: '0x55da…a3f9' },
-    { id: 1010, timestamp: new Date(Date.now() - 5*24*60*60*1000).toISOString(), usdAmount: 7.25, fiatAmount: 407, fiatCurrency: 'PHP', token: 'USDC', network: 'Polygon', status: 'confirmed', hash: '0xd2e0…8b1f' },
+    { id: 1001, timestamp: new Date(Date.now() - 1*60*60*1000).toISOString(), usdAmount: 12.50, fiatAmount: 701, fiatCurrency: 'PHP', token: 'USDC', network: 'Morph', status: 'confirmed', hash: '0x4a2f…e7c3' },
+    { id: 1002, timestamp: new Date(Date.now() - 3*60*60*1000).toISOString(), usdAmount: 8.91, fiatAmount: 500, fiatCurrency: 'PHP', token: 'USDT', network: 'Morph', status: 'confirmed', hash: '0x9b3c…2e1d' },
+    { id: 1003, timestamp: new Date(Date.now() - 5*60*60*1000).toISOString(), usdAmount: 3.20, fiatAmount: 179, fiatCurrency: 'PHP', token: 'USDC', network: 'Morph', status: 'pending', hash: '0x7f11…b4a9' },
+    { id: 1004, timestamp: new Date(Date.now() - 1*24*60*60*1000).toISOString(), usdAmount: 22.00, fiatAmount: 1234, fiatCurrency: 'PHP', token: 'USDC', network: 'Morph', status: 'confirmed', hash: '0xce7a…19f2' },
+    { id: 1005, timestamp: new Date(Date.now() - 1*24*60*60*1000 - 2*60*60*1000).toISOString(), usdAmount: 5.75, fiatAmount: 322, fiatCurrency: 'PHP', token: 'USDT', network: 'Morph', status: 'confirmed', hash: '0x3d88…c5b0' },
+    { id: 1006, timestamp: new Date(Date.now() - 2*24*60*60*1000).toISOString(), usdAmount: 15.00, fiatAmount: 842, fiatCurrency: 'PHP', token: 'USDC', network: 'Morph', status: 'confirmed', hash: '0x8e42…f3d1' },
+    { id: 1007, timestamp: new Date(Date.now() - 3*24*60*60*1000).toISOString(), usdAmount: 1.50, fiatAmount: 84, fiatCurrency: 'PHP', token: 'USDT', network: 'Morph', status: 'failed', hash: '0x2c19…77aa' },
+    { id: 1008, timestamp: new Date(Date.now() - 3*24*60*60*1000 - 4*60*60*1000).toISOString(), usdAmount: 30.00, fiatAmount: 1684, fiatCurrency: 'PHP', token: 'USDC', network: 'Morph', status: 'confirmed', hash: '0xb771…0e5c' },
+    { id: 1009, timestamp: new Date(Date.now() - 4*24*60*60*1000).toISOString(), usdAmount: 18.40, fiatAmount: 1033, fiatCurrency: 'PHP', token: 'USDT', network: 'Morph', status: 'confirmed', hash: '0x55da…a3f9' },
+    { id: 1010, timestamp: new Date(Date.now() - 5*24*60*60*1000).toISOString(), usdAmount: 7.25, fiatAmount: 407, fiatCurrency: 'PHP', token: 'USDC', network: 'Morph', status: 'confirmed', hash: '0xd2e0…8b1f' },
   ];
 
   // Merge with any real localStorage entries

@@ -38,9 +38,10 @@ export const CONFIG = {
     pollIntervalMs: 2500,
   },
 
+  settlementNetwork: 'Morph',
   networks: {
-    USDC: 'Polygon',
-    USDT: 'Ethereum',
+    USDC: 'Morph',
+    USDT: 'Morph',
   },
 
   /** Placeholder for Magic Link publishable key (set in deployment) */

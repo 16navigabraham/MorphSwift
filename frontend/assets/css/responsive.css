@@ -26,16 +26,39 @@ body.app-shell {
   height: 100dvh;
   max-height: 100dvh;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
   background: var(--morph-bg, var(--bg));
   padding:
     var(--safe-top)
     max(var(--safe-right), 0px)
     var(--safe-bottom)
     max(var(--safe-left), 0px);
+  box-sizing: border-box;
 }
 
 body.app-shell > * {
   min-width: 0;
+  box-sizing: border-box;
+}
+
+/* Scrollable / flex main column — keeps footer inside viewport */
+.app-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  width: 100%;
+}
+
+body.app-shell > .powered-by {
+  flex: 0 0 auto;
+}
+
+body.app-shell > .success-overlay,
+body.app-shell > .modal-backdrop {
+  flex: none;
 }
 
 /* ── Onboarding (scrollable when content exceeds viewport) ─── */
@@ -52,6 +75,7 @@ body.page-onboarding {
     max(16px, var(--safe-bottom))
     max(16px, var(--safe-left));
   -webkit-overflow-scrolling: touch;
+  box-sizing: border-box;
 }
 
 body.page-onboarding .container {
@@ -93,26 +117,35 @@ body.page-onboarding .container {
 
 /* ── Terminal ──────────────────────────────────────────────── */
 body.page-terminal .amount-display {
-  min-height: clamp(48px, 12dvh, 72px);
+  min-height: clamp(40px, 10dvh, 72px);
 }
 
 body.page-terminal .amount-value {
-  font-size: clamp(28px, 12vw, 72px);
+  font-size: clamp(28px, 10vw, 72px);
   letter-spacing: -0.04em;
   overflow-wrap: anywhere;
 }
 
 body.page-terminal .cursor-blink {
-  height: clamp(28px, 8dvh, 52px);
+  height: clamp(24px, 7dvh, 52px);
 }
 
 body.page-terminal .key {
-  min-height: clamp(44px, 11dvh, 64px);
+  min-height: clamp(40px, 9dvh, 64px);
 }
 
 body.page-terminal .currency-row {
   flex-wrap: wrap;
   row-gap: 6px;
+}
+
+body.page-terminal .conversion-card {
+  flex-shrink: 0;
+}
+
+body.page-terminal .keypad {
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 @media (max-height: 520px) {
@@ -157,7 +190,7 @@ body.page-terminal .currency-row {
 }
 
 @media (orientation: landscape) and (max-height: 560px) {
-  body.page-terminal {
+  body.page-terminal .app-content {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     grid-template-rows: auto auto minmax(0, 1fr) auto;
@@ -166,7 +199,8 @@ body.page-terminal .currency-row {
       "currency currency"
       "amount conversion"
       "keypad keypad"
-      "footer footer";
+      "nav nav";
+    overflow: hidden;
   }
 
   body.page-terminal .topbar { grid-area: header; }
@@ -174,22 +208,29 @@ body.page-terminal .currency-row {
   body.page-terminal .amount-area { grid-area: amount; align-self: end; }
   body.page-terminal .conversion-card {
     grid-area: conversion;
-    margin: 0 16px 8px 0;
+    margin: 0 12px 4px 0;
     align-self: end;
   }
-  body.page-terminal .keypad { grid-area: keypad; min-height: 0; }
-  body.page-terminal .bottom-bar { grid-area: footer; }
+  body.page-terminal .keypad {
+    grid-area: keypad;
+    min-height: 0;
+    max-height: 100%;
+  }
+  body.page-terminal .bottom-bar { grid-area: nav; }
 }
 
 /* ── Checkout ──────────────────────────────────────────────── */
 body.page-checkout .qr-area {
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
 }
 
 body.page-checkout .qr-frame {
-  max-width: min(100%, 280px);
+  max-width: min(100%, 260px);
+  flex-shrink: 0;
 }
 
 body.page-checkout #qr-canvas {
@@ -201,8 +242,8 @@ body.page-checkout #qr-canvas {
 
 body.page-checkout #qr-canvas img,
 body.page-checkout #qr-canvas canvas {
-  width: min(200px, 38vmin, calc(100dvh - 260px)) !important;
-  height: min(200px, 38vmin, calc(100dvh - 260px)) !important;
+  width: min(200px, 36vmin, calc(100dvh - 280px)) !important;
+  height: min(200px, 36vmin, calc(100dvh - 280px)) !important;
   max-width: 100%;
   object-fit: contain;
 }
@@ -254,7 +295,7 @@ body.page-checkout .success-details {
 }
 
 @media (orientation: landscape) and (max-height: 560px) {
-  body.page-checkout {
+  body.page-checkout .app-content {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     grid-template-rows: auto auto minmax(0, 1fr) auto;
@@ -263,6 +304,7 @@ body.page-checkout .success-details {
       "amount tokens"
       "qr qr"
       "status status";
+    overflow: hidden;
   }
 
   body.page-checkout .topbar { grid-area: header; }
@@ -279,22 +321,28 @@ body.page-checkout .success-details {
     flex-wrap: wrap;
     justify-content: center;
     align-content: center;
+    overflow-y: auto;
   }
   body.page-checkout .address-row {
     flex: 1 1 100%;
     max-width: min(100%, 360px);
   }
-  body.page-checkout .status-bar { grid-area: status; }
+  body.page-checkout .status-bar {
+    grid-area: status;
+    flex-shrink: 0;
+  }
 }
 
 /* ── Ledger ────────────────────────────────────────────────── */
-body.page-ledger {
+body.page-ledger .app-content {
   overflow: hidden;
 }
 
 body.page-ledger .tx-list {
   min-height: 0;
   flex: 1 1 auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 body.page-ledger .stats-strip,
@@ -334,7 +382,12 @@ body.page-ledger .bottom-bar {
   }
 
   body.page-ledger .mini-chart {
-    margin-bottom: 8px;
+    height: 24px;
+    margin-bottom: 6px;
+  }
+
+  body.page-ledger .stats-strip {
+    padding: 8px 16px;
   }
 }
 
@@ -360,9 +413,12 @@ body.page-ledger .modal {
 
 /* ── Very narrow (folded / small phones) ───────────────────── */
 @media (max-width: 360px) {
-  body.page-terminal .merchant-pill span,
-  body.page-terminal .rate-badge {
+  body.page-terminal .merchant-pill {
     font-size: 10px;
+    max-width: 42%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   body.page-checkout .token-tab {

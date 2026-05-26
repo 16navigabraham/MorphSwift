@@ -67,7 +67,7 @@ Legacy `payflow-history` is read as a fallback when migrating existing browsers.
 ## Terminal (`terminal.html`)
 
 - Currency tabs: PHP, USD, NGN with hard-coded demo rates.
-- Keypad updates fiat display and three stablecoin equivalents (USDC Polygon, USDT Ethereum, USDT Tron).
+- Keypad updates fiat display and three stablecoin equivalents (USDC, USDT, BGB on Morph).
 - **Charge** validates amount, writes `sessionStorage`, navigates to `checkout.html`.
 
 ## Checkout (`checkout.html`)
