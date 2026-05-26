@@ -1,0 +1,43 @@
+{
+  "settings": {
+    "brandName": "MorphSwift",
+    "networkName": "Morph",
+    "merchants": [],
+    "checkouts": [],
+      "displayName": "Demo Merchant",
+    ],
+    "withdrawals": []
+      "txHash": "0xabc123",
+      "network": "Morph",
+      "confirmationState": "finalized"
+    }
+  ],
+  "transactions": [
+    {
+      "id": "txn_2df53cbb-ad2f-4b9b-9db4-597553a641b9",
+      "merchantId": "mrc_f5b4dbe8-050a-4b77-bc6e-37c38a2c5142",
+      "checkoutId": "chk_a7e569a9-8b0a-4804-ab93-79c409b84c06",
+      "amountFiat": 1000,
+      "currency": "PHP",
+      "token": "USDC",
+      "stablecoinAmount": 17.793594,
+      "feeUsd": 0.035587,
+      "txHash": "0xabc123",
+      "status": "settled",
+      "confirmedAt": "2026-05-25T13:02:34.896Z",
+      "displayAmount": "17.793594 USDC"
+    }
+  ],
+  "withdrawals": [
+    {
+      "id": "wd_abae966c-6bdb-4067-9b09-18390f395bc3",
+      "merchantId": "mrc_f5b4dbe8-050a-4b77-bc6e-37c38a2c5142",
+      "amount": 1,
+      "token": "USDC",
+      "destination": "0xfeedbeef",
+      "status": "completed",
+      "createdAt": "2026-05-25T13:02:34.904Z",
+      "completedAt": "2026-05-25T13:02:34.904Z"
+    }
+  ]
+}
