@@ -9,12 +9,25 @@
   --safe-right: env(safe-area-inset-right, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
+  --vh-full: 100dvh;
+}
+
+@supports (height: 100svh) {
+  :root {
+    --vh-full: 100svh;
+  }
 }
 
 html {
   height: 100%;
   overflow: hidden;
+  overflow-x: clip;
   -webkit-text-size-adjust: 100%;
+}
+
+html, body {
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 /* ── Shared POS shell (terminal, checkout, ledger) ─────────── */
@@ -23,8 +36,8 @@ body.app-shell {
   max-width: min(var(--app-max-w), 100vw);
   margin: 0 auto;
   min-height: 0;
-  height: 100dvh;
-  max-height: 100dvh;
+  height: var(--vh-full);
+  max-height: var(--vh-full);
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -46,6 +59,7 @@ body.app-shell > * {
 .app-content {
   flex: 1 1 auto;
   min-height: 0;
+  max-height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -64,8 +78,10 @@ body.app-shell > .modal-backdrop {
 /* ── Onboarding (scrollable when content exceeds viewport) ─── */
 body.page-onboarding {
   width: 100%;
-  min-height: 100dvh;
-  max-height: 100dvh;
+  max-width: min(var(--app-max-w), 100%);
+  margin: 0 auto;
+  min-height: var(--vh-full);
+  max-height: var(--vh-full);
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -189,6 +205,56 @@ body.page-terminal .keypad {
   }
 }
 
+/* ── Sender (payer receipt) ────────────────────────────────── */
+body.page-sender .app-content {
+  overflow: hidden;
+}
+
+body.page-sender .sender-main {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+@media (orientation: landscape) and (max-height: 560px) {
+  body.page-sender .sender-main {
+    justify-content: flex-start;
+    padding: 12px 16px 16px;
+  }
+
+  body.page-sender .check-circle {
+    width: 64px;
+    height: 64px;
+    margin-bottom: 12px;
+  }
+
+  body.page-sender .sender-title {
+    font-size: clamp(22px, 5vw, 28px);
+  }
+
+  body.page-sender .receipt-card {
+    padding: 12px 14px;
+  }
+
+  body.page-sender .actions {
+    flex-direction: row;
+    gap: 8px;
+  }
+
+  body.page-sender .actions .btn-primary,
+  body.page-sender .actions .btn-ghost {
+    flex: 1;
+    padding: 12px;
+  }
+}
+
+@media (orientation: portrait) and (max-height: 700px) {
+  body.page-sender .sender-main {
+    justify-content: flex-start;
+    padding-top: 16px;
+  }
+}
+
+/* ── Landscape: compact POS layouts ──────────────────────── */
 @media (orientation: landscape) and (max-height: 560px) {
   body.page-terminal .app-content {
     display: grid;
@@ -291,6 +357,24 @@ body.page-checkout .success-details {
     width: 72px;
     height: 72px;
     margin-bottom: 16px;
+  }
+}
+
+/* Tablet / wide landscape — keep column, limit width */
+@media (orientation: landscape) and (min-height: 561px) {
+  body.app-shell {
+    max-width: min(var(--app-max-w), 100%);
+  }
+}
+
+@media (orientation: portrait) {
+  body.app-shell .app-content {
+    overflow: hidden;
+  }
+
+  body.page-terminal .keypad {
+    flex: 1 1 auto;
+    min-height: 120px;
   }
 }
 

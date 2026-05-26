@@ -28,6 +28,7 @@ export const CONFIG = {
     sessionToken: 'morphswift-session-token',
     merchant: 'morphswift-merchant',
     history: 'morphswift-history',
+    payerReceipt: 'morphswift-payer-receipt',
     chargeAmount: 'chargeAmount',
     chargeUsd: 'chargeUSD',
     chargeCurrency: 'chargeCurrency',

@@ -7,6 +7,7 @@ const SHELL = [
   './terminal.html',
   './checkout.html',
   './ledger.html',
+  './sender.html',
   './assets/css/tokens.css',
   './assets/css/base.css',
   './assets/css/components.css',

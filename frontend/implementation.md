@@ -11,6 +11,7 @@ The frontend is a **static, multi-page** application: no build step required. Ea
 | `onboarding.html` | Merchant login (Google demo + magic-link email UI) |
 | `terminal.html` | Fiat keypad, live stablecoin conversion, charge CTA |
 | `checkout.html` | QR display, payment status, success overlay |
+| `sender.html` | **Payer receipt** — confirmation after the customer sends payment |
 | `ledger.html` | Revenue stats, transaction list, withdraw modal |
 
 ## Configuration
@@ -76,7 +77,14 @@ Legacy `payflow-history` is read as a fallback when migrating existing browsers.
 - Renders QR via CDN `qrcodejs` (local `lib/qrcode*.js` is optional).
 - Token/network tabs swap wallet address and QR payload.
 - **Demo mode:** `simulatePayment()` drives mempool → block → success UI without API.
-- On success, appends a record to `morphswift-history` for the ledger.
+- On success, appends a record to `morphswift-history` for the ledger and writes `morphswift-payer-receipt` for the sender view.
+
+## Sender receipt (`sender.html`)
+
+- Shown on the **customer’s device** after they send payment (wallet return URL or demo link).
+- Loads receipt data from `sessionStorage` (`morphswift-payer-receipt`) and/or URL query params (`amount`, `token`, `merchant`, `tx`, `fiatAmount`, `fiatCurrency`).
+- Merchant checkout success screen includes **View customer receipt** → `sender.html`.
+- Uses the same responsive shell (`app-content`, `page-sender`) for portrait and landscape.
 
 ## Ledger (`ledger.html`)
 
