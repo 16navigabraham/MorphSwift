@@ -33,13 +33,13 @@ Import from page scripts:
 
 ## Stylesheet stack
 
-Import order when refactoring pages off inline CSS:
+CSS used by the current HTML pages (in `<head>`):
 
-1. `assets/css/tokens.css` — design tokens (`--amber`, `--surface`, fonts)
-2. `assets/css/base.css` — reset, typography, layout primitives
-3. `assets/css/components.css` — topbar, keypad, ledger rows, modals, etc.
+1. `assets/css/responsive.css` — viewport/orientation layout rules
+2. `assets/css/morph-brand.css` — brand + shared visual accents
+3. `assets/css/fit-screen.css` — viewport-fit / no-scroll scaling fixes (terminal, sender, onboarding)
 
-Pages currently duplicate a subset of these tokens inline for standalone demos.
+In addition, `assets/css/tokens.css`, `assets/css/base.css`, and `assets/css/components.css` are the intended “cleanup target” when moving away from per-page inline demo styles; pages may still duplicate a subset of design tokens inline for now.
 
 ## JavaScript modules
 
