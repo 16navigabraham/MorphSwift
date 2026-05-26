@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" fill="none" role="img" aria-label="PayFlow">
+  <rect width="36" height="36" rx="8" fill="#f5a623"/>
+  <path d="M8 26L18 10L28 26" stroke="#0a0a0f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M12.5 19.5H23.5" stroke="#0a0a0f" stroke-width="2.5" stroke-linecap="round"/>
+</svg>

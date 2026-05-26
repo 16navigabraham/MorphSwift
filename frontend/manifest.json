@@ -1,0 +1,19 @@
+{
+  "name": "PayFlow POS",
+  "short_name": "PayFlow",
+  "description": "Mobile-first crypto point-of-sale for merchants on MorphSwift.",
+  "start_url": "./onboarding.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0a0a0f",
+  "theme_color": "#f5a623",
+  "icons": [
+    {
+      "src": "./assets/icons/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
