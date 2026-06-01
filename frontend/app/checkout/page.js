@@ -10,6 +10,7 @@ import { saveLocalTransaction } from '../../assets/js/ledger.js';
 import {
   createCheckoutOnChain,
   pollCheckoutPaid,
+  pollUsdcTransfer,
 } from '../../assets/js/gatewayContract.js';
 import { getSigner, hasInjectedProvider } from '../../assets/js/wallet.js';
 import { QRCodeSVG } from 'qrcode.react';
@@ -123,25 +124,53 @@ function CheckoutContent() {
   }
 
   async function startPollingOrFallback(co, resolvedOnChainId) {
+    let confirmedFlag = false;
+
+    const onPaid = async (txHash) => {
+      if (confirmedFlag) return;
+      confirmedFlag = true;
+      stopAllPolling();
+      await handleConfirmed(co, txHash ?? randomHash());
+    };
+
+    const stopAllPolling = () => {
+      stopPollRef.current?.();
+      stopPollRef.current = null;
+    };
+
+    // Path A: on-chain gateway checkout — poll for CheckoutPaid event
     if (resolvedOnChainId) {
       setStatus('Waiting for on-chain payment…');
-      stopPollRef.current = pollCheckoutPaid(resolvedOnChainId, {
+      const stopGateway = pollCheckoutPaid(resolvedOnChainId, {
         intervalMs: CONFIG.checkout.pollIntervalMs,
         timeoutMs: CONFIG.checkout.expirySeconds * 1000,
-        onPaid: async ({ txHash }) => await handleConfirmed(co, txHash ?? randomHash()),
+        onPaid: async ({ txHash }) => onPaid(txHash),
         onError: (err) => setStatus(err.message || 'Payment polling failed'),
       });
+      stopPollRef.current = stopGateway;
     }
 
-    // Always poll the server status regardless — catches payments made via /pay page
-    // (direct transfers, or on-chain confirmed by customer before merchant sees the event)
+    // Path B: no gateway — scan chain for direct USDC/USDT transfers to payoutWallet
+    if (!resolvedOnChainId && co.payoutWallet) {
+      setStatus('Scanning for payment…');
+      const stopTransfer = pollUsdcTransfer(co.payoutWallet, co.stablecoinAmount, {
+        intervalMs: CONFIG.checkout.pollIntervalMs,
+        timeoutMs: CONFIG.checkout.expirySeconds * 1000,
+        onReceived: async ({ txHash }) => onPaid(txHash),
+        onError: () => setStatus('Waiting for payment — confirm manually when received.'),
+      });
+      stopPollRef.current = stopTransfer;
+    }
+
+    // Always also poll the server — catches confirmations from the /pay page
     const serverPoll = setInterval(async () => {
+      if (confirmedFlag) { clearInterval(serverPoll); return; }
       try {
         const fresh = await fetchCheckout(co.id);
-        if (fresh.status === 'confirmed' && !confirmedTx) {
+        if (fresh.status === 'confirmed') {
+          confirmedFlag = true;
           clearInterval(serverPoll);
           stopPollRef.current?.();
-          // Checkout was confirmed externally — update UI without re-calling confirmCheckout
           setConfirmedTx({ txHash: fresh.txHash, stablecoinAmount: fresh.stablecoinAmount, token: fresh.token });
           setOverlayVisible(true);
           setStatus(`Confirmed on ${CONFIG.settlementNetwork}.`);
@@ -150,14 +179,11 @@ function CheckoutContent() {
       } catch { /* non-fatal */ }
     }, CONFIG.checkout.pollIntervalMs);
 
+    const prevStop = stopPollRef.current;
     stopPollRef.current = () => {
-      stopPollRef.current = null;
+      prevStop?.();
       clearInterval(serverPoll);
     };
-
-    if (!resolvedOnChainId) {
-      setStatus('Waiting for payment — confirm manually when received.');
-    }
   }
 
   function setupQr(co) {

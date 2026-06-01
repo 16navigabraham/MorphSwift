@@ -223,6 +223,85 @@ export async function fetchOnChainBalances(walletAddress) {
   };
 }
 
+// ─── USDC/USDT transfer detection (no-contract path) ─────────────────────────
+
+const ERC20_TRANSFER_ABI = [
+  'event Transfer(address indexed from, address indexed to, uint256 value)',
+];
+
+/**
+ * Scan recent blocks for a USDC or USDT transfer to payoutWallet matching amount.
+ * Used when the checkout has no onChainCheckoutId (direct transfer path).
+ *
+ * Checks last 2000 blocks for past transfers first (recovery), then polls.
+ * Returns a stop() function to cancel polling.
+ *
+ * handlers: onReceived({ txHash, token }), onError(err), intervalMs, timeoutMs
+ */
+export function pollUsdcTransfer(payoutWallet, stablecoinAmount, handlers = {}) {
+  const { onReceived, onError, intervalMs = 4000, timeoutMs = 870_000 } = handlers;
+  const provider = getRpcProvider();
+  let stopped = false;
+  const started = Date.now();
+
+  // Allow 2% tolerance to account for fee deductions
+  const amountUnits = ethers.parseUnits(Number(stablecoinAmount).toFixed(6), 6);
+  const minAmount = (amountUnits * 98n) / 100n;
+
+  async function scanBlocks(fromBlock, toBlock) {
+    for (const [tokenAddr, symbol] of [
+      [CONFIG.contract.usdcAddress, 'USDC'],
+      [CONFIG.contract.usdtAddress, 'USDT'],
+    ]) {
+      const contract = new ethers.Contract(tokenAddr, ERC20_TRANSFER_ABI, provider);
+      try {
+        const events = await contract.queryFilter(
+          contract.filters.Transfer(null, payoutWallet),
+          fromBlock,
+          toBlock,
+        );
+        for (const ev of events) {
+          if (ev.args.value >= minAmount) {
+            return { txHash: ev.transactionHash, token: symbol };
+          }
+        }
+      } catch { /* RPC may limit block range — non-fatal */ }
+    }
+    return null;
+  }
+
+  (async () => {
+    try {
+      const currentBlock = await provider.getBlockNumber();
+
+      // Check history first (recovers payments that already happened)
+      const historical = await scanBlocks(Math.max(0, currentBlock - 2000), currentBlock);
+      if (historical && !stopped) { onReceived?.(historical); return; }
+
+      // Then poll for new incoming transfers
+      let lastBlock = currentBlock;
+      const check = async () => {
+        if (stopped) return;
+        if (Date.now() - started > timeoutMs) { onError?.(new Error('Payment timeout')); return; }
+        try {
+          const tip = await provider.getBlockNumber();
+          if (tip > lastBlock) {
+            const found = await scanBlocks(lastBlock + 1, tip);
+            lastBlock = tip;
+            if (found) { onReceived?.(found); return; }
+          }
+        } catch { /* keep polling */ }
+        if (!stopped) setTimeout(check, intervalMs);
+      };
+      setTimeout(check, intervalMs);
+    } catch (err) {
+      if (!stopped) onError?.(err);
+    }
+  })();
+
+  return () => { stopped = true; };
+}
+
 // ─── QR payment URI ──────────────────────────────────────────────────────────
 
 /**
