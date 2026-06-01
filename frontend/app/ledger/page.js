@@ -178,6 +178,7 @@ export default function LedgerPage() {
             Server unreachable — showing local transaction history only. Balance may be outdated.
           </div>
         )}
+        {/* Metrics & wallet */}
         <div className="grid-2">
           <article className="summary-card">
             <p className="section-label">Revenue</p>
@@ -186,26 +187,7 @@ export default function LedgerPage() {
               <div className="metric"><div><div className="metric-label">7 day</div><div className="metric-value">{weekRev.toFixed(2)} USDC</div></div><div className="metric-sub">Rolling total</div></div>
               <div className="metric"><div><div className="metric-label">Earned</div><div className="metric-value">{balance.toFixed(2)} USDC</div></div><div className="metric-sub">Platform balance</div></div>
             </div>
-
-            <div className="divider" />
-            <p className="section-label" style={{ marginBottom: 8 }}>On-chain wallet</p>
-            {[
-              { token: 'USDC', value: onChainBalance.usdc },
-              { token: 'USDT', value: onChainBalance.usdt },
-            ].map(({ token, value }) => (
-              <div key={token} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <TokenLogo token={token} size={18} />
-                  <span style={{ fontSize: 12, color: 'var(--muted)' }}>{token}</span>
-                </div>
-                <span style={{ fontFamily: 'var(--font-display), system-ui, sans-serif', fontSize: 18, fontWeight: 800, letterSpacing: '-0.05em' }}>
-                  {value === null ? '—' : Number(value).toFixed(2)}
-                </span>
-              </div>
-            ))}
-
-            <div className="divider" />
-            <div className="mini-chart">
+            <div className="mini-chart" style={{ marginTop: 12 }}>
               {chartTotals.map((value, index) => {
                 const maxVal = Math.max(...chartTotals, 1);
                 const height = Math.max(10, Math.round((value / maxVal) * 100));
@@ -218,68 +200,91 @@ export default function LedgerPage() {
           </article>
 
           <article className="summary-card">
-            {pendingCheckouts.length > 0 && (() => {
-              const pending = pendingCheckouts.filter((c) => c.status === 'pending');
-              const expired = pendingCheckouts.filter((c) => c.status === 'expired');
-              return (
-                <>
-                  {pending.length > 0 && (
-                    <>
-                      <p className="section-label">Pending payments</p>
-                      <div className="tx-list" style={{ marginBottom: 10 }}>
-                        {pending.map((co) => (
-                          <a key={co.id} href={`/checkout?id=${co.id}`} style={{ textDecoration: 'none' }}>
-                            <div className="tx-item" style={{ borderColor: 'rgba(242,173,61,0.3)' }}>
-                              <div className="tx-icon pending">◷</div>
-                              <div className="tx-info">
-                                <div className="tx-primary">
-                                  <span className="tx-amount">{Number(co.stablecoinAmount).toFixed(2)}</span>
-                                  <span className="tx-token" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                                    <TokenLogo token={co.token} size={14} />{co.token}
-                                  </span>
-                                  <span className="tx-fiat">{formatFiatSymbol(co.currency)}{Number(co.amountFiat).toLocaleString()}</span>
-                                </div>
-                                <div className="tx-secondary">
-                                  <span>{fmtTime(co.createdAt)}</span>
-                                  <span style={{ fontSize: 10, color: 'var(--amber)' }}>Tap to open →</span>
-                                </div>
-                              </div>
-                              <span className="status-pill pending">pending</span>
-                            </div>
-                          </a>
-                        ))}
-                      </div>
-                    </>
-                  )}
-                  {expired.length > 0 && (
-                    <>
-                      <p className="section-label" style={{ marginTop: 10 }}>Expired</p>
-                      <div className="tx-list" style={{ marginBottom: 10 }}>
-                        {expired.map((co) => (
-                          <div key={co.id} className="tx-item" style={{ opacity: 0.6 }}>
-                            <div className="tx-icon failed">✕</div>
-                            <div className="tx-info">
-                              <div className="tx-primary">
-                                <span className="tx-amount">{Number(co.stablecoinAmount).toFixed(2)}</span>
-                                <span className="tx-token" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                                  <TokenLogo token={co.token} size={14} />{co.token}
-                                </span>
-                                <span className="tx-fiat">{formatFiatSymbol(co.currency)}{Number(co.amountFiat).toLocaleString()}</span>
-                              </div>
-                              <div className="tx-secondary">
-                                <span>{fmtTime(co.createdAt)}</span>
-                              </div>
-                            </div>
-                            <span className="status-pill failed">expired</span>
+            <p className="section-label">On-chain wallet</p>
+            {[
+              { token: 'USDC', value: onChainBalance.usdc },
+              { token: 'USDT', value: onChainBalance.usdt },
+            ].map(({ token, value }) => (
+              <div key={token} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <TokenLogo token={token} size={22} />
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 600 }}>{token}</div>
+                    <div style={{ fontSize: 10, color: 'var(--muted)' }}>Real balance</div>
+                  </div>
+                </div>
+                <span style={{ fontFamily: 'var(--font-display), system-ui, sans-serif', fontSize: 20, fontWeight: 800, letterSpacing: '-0.05em' }}>
+                  {value === null ? '—' : Number(value).toFixed(2)}
+                </span>
+              </div>
+            ))}
+          </article>
+        </div>
+
+        {/* Pending & Expired Checkouts */}
+        {pendingCheckouts.length > 0 && (() => {
+          const pending = pendingCheckouts.filter((c) => c.status === 'pending');
+          const expired = pendingCheckouts.filter((c) => c.status === 'expired');
+          return (
+            <article className="summary-card">
+              <p className="section-label">Pending payments</p>
+              {pending.length > 0 && (
+                <div className="tx-list" style={{ marginBottom: 14 }}>
+                  {pending.map((co) => (
+                    <a key={co.id} href={`/checkout?id=${co.id}`} style={{ textDecoration: 'none' }}>
+                      <div className="tx-item" style={{ borderColor: 'rgba(242,173,61,0.3)' }}>
+                        <div className="tx-icon pending">◷</div>
+                        <div className="tx-info">
+                          <div className="tx-primary">
+                            <span className="tx-amount">{Number(co.stablecoinAmount).toFixed(2)}</span>
+                            <span className="tx-token" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                              <TokenLogo token={co.token} size={14} />{co.token}
+                            </span>
+                            <span className="tx-fiat">{formatFiatSymbol(co.currency)}{Number(co.amountFiat).toLocaleString()}</span>
                           </div>
-                        ))}
+                          <div className="tx-secondary">
+                            <span>{fmtTime(co.createdAt)}</span>
+                            <span style={{ fontSize: 10, color: 'var(--amber)' }}>Open checkout →</span>
+                          </div>
+                        </div>
+                        <span className="status-pill pending">pending</span>
                       </div>
-                    </>
-                  )}
-                  <div className="divider" />
+                    </a>
+                  ))}
+                </div>
+              )}
+              {pending.length === 0 && <p style={{ fontSize: 12, color: 'var(--muted)', margin: '0 0 14px' }}>None</p>}
+
+              {expired.length > 0 && (
+                <>
+                  <p className="section-label" style={{ marginTop: 4 }}>Expired</p>
+                  <div className="tx-list" style={{ marginBottom: 14 }}>
+                    {expired.map((co) => (
+                      <div key={co.id} className="tx-item" style={{ opacity: 0.6 }}>
+                        <div className="tx-icon failed">✕</div>
+                        <div className="tx-info">
+                          <div className="tx-primary">
+                            <span className="tx-amount">{Number(co.stablecoinAmount).toFixed(2)}</span>
+                            <span className="tx-token" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                              <TokenLogo token={co.token} size={14} />{co.token}
+                            </span>
+                            <span className="tx-fiat">{formatFiatSymbol(co.currency)}{Number(co.amountFiat).toLocaleString()}</span>
+                          </div>
+                          <div className="tx-secondary">
+                            <span>{fmtTime(co.createdAt)}</span>
+                          </div>
+                        </div>
+                        <span className="status-pill failed">expired</span>
+                      </div>
+                    ))}
+                  </div>
                 </>
-              );
-            })()}
+              )}
+            </article>
+        )})()}
+
+        {/* Transaction history */}
+        <article className="summary-card">
             <p className="section-label">Transactions</p>
             <div className="filter-row">
               {['all', 'confirmed', 'pending', 'failed'].map((item) => (
@@ -335,7 +340,6 @@ export default function LedgerPage() {
               })}
             </div>
           </article>
-        </div>
       </section>
 
       {/* Withdraw modal */}
