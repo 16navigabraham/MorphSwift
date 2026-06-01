@@ -131,8 +131,31 @@ function CheckoutContent() {
         onPaid: async ({ txHash }) => await handleConfirmed(co, txHash ?? randomHash()),
         onError: (err) => setStatus(err.message || 'Payment polling failed'),
       });
-    } else {
-      // No wallet connected — merchant must confirm manually after receiving payment
+    }
+
+    // Always poll the server status regardless — catches payments made via /pay page
+    // (direct transfers, or on-chain confirmed by customer before merchant sees the event)
+    const serverPoll = setInterval(async () => {
+      try {
+        const fresh = await fetchCheckout(co.id);
+        if (fresh.status === 'confirmed' && !confirmedTx) {
+          clearInterval(serverPoll);
+          stopPollRef.current?.();
+          // Checkout was confirmed externally — update UI without re-calling confirmCheckout
+          setConfirmedTx({ txHash: fresh.txHash, stablecoinAmount: fresh.stablecoinAmount, token: fresh.token });
+          setOverlayVisible(true);
+          setStatus(`Confirmed on ${CONFIG.settlementNetwork}.`);
+          clearInterval(timerRef.current);
+        }
+      } catch { /* non-fatal */ }
+    }, CONFIG.checkout.pollIntervalMs);
+
+    stopPollRef.current = () => {
+      stopPollRef.current = null;
+      clearInterval(serverPoll);
+    };
+
+    if (!resolvedOnChainId) {
       setStatus('Waiting for payment — confirm manually when received.');
     }
   }

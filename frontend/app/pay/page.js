@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { QRCodeSVG } from 'qrcode.react';
 import { CONFIG } from '../../config.js';
-import { fetchCheckout } from '../../assets/js/chainListener.js';
+import { fetchCheckout, confirmCheckout } from '../../assets/js/chainListener.js';
 import { buildPaymentUri, shortAddress } from '../../assets/js/qrPayload.js';
 import { connectWallet, ensureCorrectNetwork, hasInjectedProvider } from '../../assets/js/wallet.js';
 import TokenLogo from '../components/TokenLogo';
@@ -56,18 +56,17 @@ function PayContent() {
     try {
       setError('');
       setStep('approving');
+
       const { signer, address } = await connectWallet();
-      const ok = await ensureCorrectNetwork(CONFIG.contract.chainId);
-      if (!ok) {
-        setError(`Switch to ${CONFIG.contract.chainName} in your wallet, then try again.`);
-        setStep('ready');
-        return;
-      }
+      // Triggers MetaMask popup to switch or add Morph Hoodi if needed
+      await ensureCorrectNetwork(CONFIG.contract.chainId);
 
       const amountUnits = ethers.parseUnits(Number(checkout.stablecoinAmount).toFixed(6), 6);
 
+      let finalTxHash = null;
+
       if (checkout.onChainCheckoutId) {
-        // Approve USDC for gateway, then call payCheckout
+        // Gateway contract path — payCheckout handles settlement
         const usdc = new ethers.Contract(CONFIG.contract.usdcAddress, ERC20_ABI, signer);
         const allowance = await usdc.allowance(address, CONFIG.contract.gatewayAddress);
         if (allowance < amountUnits) {
@@ -78,14 +77,23 @@ function PayContent() {
         const gateway = new ethers.Contract(CONFIG.contract.gatewayAddress, GATEWAY_PAY_ABI, signer);
         const tx = await gateway.payCheckout(checkout.onChainCheckoutId);
         const receipt = await tx.wait();
-        setTxHash(receipt.hash);
+        finalTxHash = receipt.hash;
       } else {
-        // Direct USDC transfer to payoutWallet
+        // Direct USDC transfer path
         const usdc = new ethers.Contract(CONFIG.contract.usdcAddress, ERC20_ABI, signer);
         setStep('paying');
         const tx = await usdc.transfer(checkout.payoutWallet, amountUnits);
         const receipt = await tx.wait();
-        setTxHash(receipt.hash);
+        finalTxHash = receipt.hash;
+      }
+
+      setTxHash(finalTxHash);
+
+      // Confirm on the server so merchant ledger and balance update
+      try {
+        await confirmCheckout(checkout.id, finalTxHash);
+      } catch {
+        // Non-fatal — payment happened on-chain, server update can retry
       }
 
       setStep('paid');
@@ -179,7 +187,6 @@ function PayContent() {
             <div style={{ padding: '16px 20px' }}>
               {error && <p style={{ fontSize: 12, color: 'var(--red)', margin: '0 0 12px' }}>{error}</p>}
 
-              {/* Option A: wallet connected on PC or mobile */}
               {hasWallet && (
                 <button
                   style={{
