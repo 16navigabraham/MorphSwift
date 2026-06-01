@@ -3,6 +3,18 @@
  */
 
 import { apiUrl, CONFIG } from '../../config.js';
+export async function createCheckout(payload) {
+  const res = await fetch(apiUrl('checkouts'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message ?? `Checkout create failed (${res.status})`);
+  }
+  return res.json();
+}
 
 export async function fetchCheckout(checkoutId) {
   const res = await fetch(apiUrl(`checkouts/${checkoutId}`));

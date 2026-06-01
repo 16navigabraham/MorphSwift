@@ -2,11 +2,73 @@
   "settings": {
     "brandName": "MorphSwift",
     "networkName": "Morph",
-    "merchants": [],
-    "checkouts": [],
-      "displayName": "Demo Merchant",
+    "settlementTargetSeconds": 3,
+    "supportedCurrencies": [
+      "USD",
+      "PHP",
+      "SGD",
+      "MYR",
+      "IDR",
+      "THB",
+      "VND"
     ],
-    "withdrawals": []
+    "supportedStablecoins": [
+      "USDC",
+      "USDT"
+    ],
+    "fiatRates": {
+      "USD": 1,
+      "PHP": 56.2,
+      "SGD": 1.35,
+      "MYR": 4.7,
+      "IDR": 15750,
+      "THB": 35.8,
+      "VND": 25250
+    },
+    "tokenRates": {
+      "USDC": 1,
+      "USDT": 1
+    },
+    "feeModel": {
+      "networkBps": 8,
+      "platformBps": 12,
+      "minimumNetworkFeeUsd": 0.003
+    }
+  },
+  "merchants": [
+    {
+      "id": "mrc_d755ee25-6112-4f95-9168-7dc17c19f9b6",
+      "email": "merchant@morphswift.app",
+      "displayName": "Morph Merchant",
+      "provider": "magic-link",
+      "status": "active",
+      "balance": 8.896797,
+      "currency": "USDC",
+      "payoutWallet": "0x065a5d310ce1ac2ce6e5cba218d9f776a83a6876",
+      "createdAt": "2026-06-01T08:27:03.401Z",
+      "lastLoginAt": "2026-06-01T08:27:03.402Z"
+    }
+  ],
+  "checkouts": [
+    {
+      "id": "chk_3601c6aa-78a6-4bb8-9d9a-188d96554e75",
+      "merchantId": "mrc_d755ee25-6112-4f95-9168-7dc17c19f9b6",
+      "merchantEmail": "merchant@morphswift.app",
+      "merchantName": "Morph Merchant",
+      "payoutWallet": "0x065a5d310ce1ac2ce6e5cba218d9f776a83a6876",
+      "status": "confirmed",
+      "amountFiat": 500,
+      "currency": "PHP",
+      "token": "USDC",
+      "stablecoinAmount": 8.896797,
+      "exchangeRate": 56.2,
+      "networkFeeUsd": 0.007117,
+      "platformFeeUsd": 0.010676,
+      "displayAmount": "8.896797 USDC",
+      "qrPayload": "eyJwcm90b2NvbCI6Im1vcnBoc3dpZnQtcG9zLXYxIiwiY2hlY2tvdXRJZCI6ImNoa18zNjAxYzZhYS03OGE2LTRiYjgtOWQ5YS0xODhkOTY1NTRlNzUiLCJtZXJjaGFudElkIjoibXJjX2Q3NTVlZTI1LTYxMTItNGY5NS05MTY4LTdkYzE3YzE5ZjliNiIsImFtb3VudEZpYXQiOjUwMCwiY3VycmVuY3kiOiJQSFAiLCJ0b2tlbiI6IlVTREMiLCJyZWNpcGllbnQiOiJtcmNfZDc1NWVlMjUtNjExMi00Zjk1LTkxNjgtN2RjMTdjMTlmOWI2IiwiY3JlYXRlZEF0IjoiMjAyNi0wNi0wMVQwODoyNzowMy40MTlaIn0",
+      "createdAt": "2026-06-01T08:27:03.419Z",
+      "confirmedAt": "2026-06-01T08:27:03.426Z",
+      "reference": "ORDER-1",
       "txHash": "0xabc123",
       "network": "Morph",
       "confirmationState": "finalized"
@@ -14,30 +76,19 @@
   ],
   "transactions": [
     {
-      "id": "txn_2df53cbb-ad2f-4b9b-9db4-597553a641b9",
-      "merchantId": "mrc_f5b4dbe8-050a-4b77-bc6e-37c38a2c5142",
-      "checkoutId": "chk_a7e569a9-8b0a-4804-ab93-79c409b84c06",
-      "amountFiat": 1000,
+      "id": "txn_3983b53d-8b0f-431a-920f-e3bf73d78b9f",
+      "merchantId": "mrc_d755ee25-6112-4f95-9168-7dc17c19f9b6",
+      "checkoutId": "chk_3601c6aa-78a6-4bb8-9d9a-188d96554e75",
+      "amountFiat": 500,
       "currency": "PHP",
       "token": "USDC",
-      "stablecoinAmount": 17.793594,
-      "feeUsd": 0.035587,
+      "stablecoinAmount": 8.896797,
+      "feeUsd": 0.017793,
       "txHash": "0xabc123",
       "status": "settled",
-      "confirmedAt": "2026-05-25T13:02:34.896Z",
-      "displayAmount": "17.793594 USDC"
+      "confirmedAt": "2026-06-01T08:27:03.426Z",
+      "displayAmount": "8.896797 USDC"
     }
   ],
-  "withdrawals": [
-    {
-      "id": "wd_abae966c-6bdb-4067-9b09-18390f395bc3",
-      "merchantId": "mrc_f5b4dbe8-050a-4b77-bc6e-37c38a2c5142",
-      "amount": 1,
-      "token": "USDC",
-      "destination": "0xfeedbeef",
-      "status": "completed",
-      "createdAt": "2026-05-25T13:02:34.904Z",
-      "completedAt": "2026-05-25T13:02:34.904Z"
-    }
-  ]
+  "withdrawals": []
 }

@@ -45,6 +45,11 @@ export const CONFIG = {
     USDT: 'Morph',
   },
 
+  contract: {
+    gatewayAddress: '',
+    gatewayAbiUrl: './assets/abi/MorphSwiftGateway.abi.json',
+  },
+
   /** Placeholder for Magic Link publishable key (set in deployment) */
   magicPublishableKey: '',
 };

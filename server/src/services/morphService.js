@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 
 import { HttpError } from '../lib/httpError.js';
 import { getDefaultState, readStore, updateStore } from '../lib/store.js';
@@ -9,6 +9,10 @@ function normalizeCurrency(value) {
 
 function normalizeToken(value) {
   return String(value ?? '').trim().toUpperCase();
+}
+
+function derivePseudoWallet(seed) {
+  return `0x${createHash('sha256').update(String(seed)).digest('hex').slice(0, 40)}`;
 }
 
 function toNumber(value, fieldName) {
@@ -57,6 +61,7 @@ function createMerchantSessionRecord(state, { email, displayName, provider }) {
     merchant.lastLoginAt = new Date().toISOString();
     merchant.provider = provider ?? merchant.provider;
     merchant.displayName = displayName?.trim() || merchant.displayName;
+    merchant.payoutWallet = merchant.payoutWallet ?? derivePseudoWallet(cleanEmail);
     return merchant;
   }
 
@@ -68,6 +73,7 @@ function createMerchantSessionRecord(state, { email, displayName, provider }) {
     status: 'active',
     balance: 0,
     currency: 'USDC',
+    payoutWallet: derivePseudoWallet(cleanEmail),
     createdAt: new Date().toISOString(),
     lastLoginAt: new Date().toISOString(),
   };
@@ -191,6 +197,7 @@ export async function createCheckout(input) {
       merchantId: merchant.id,
       merchantEmail: merchant.email,
       merchantName: merchant.displayName,
+      payoutWallet: merchant.payoutWallet,
       status: 'pending',
       amountFiat: quote.amountFiat,
       currency: quote.currency,

@@ -46,7 +46,7 @@ async function ensureStoreFile() {
     }
 
     await mkdir(dirname(storePath), { recursive: true });
-    await writeFile(storeUrl, JSON.stringify(defaultState, null, 2), 'utf8');
+    await writeFile(storePath, JSON.stringify(defaultState, null, 2), 'utf8');
   }
 }
 
@@ -59,7 +59,7 @@ export async function readStore() {
 
 export async function writeStore(state) {
   await ensureStoreFile();
-  await writeFile(storeUrl, JSON.stringify(state, null, 2), 'utf8');
+  await writeFile(storePath, JSON.stringify(state, null, 2), 'utf8');
 }
 
 export async function updateStore(updater) {

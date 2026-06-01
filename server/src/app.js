@@ -3,6 +3,8 @@ import dotenv from 'dotenv';
 import express from 'express';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { apiRouter } from './routes/index.js';
 import { errorHandler } from './middleware/errorHandler.js';
@@ -11,6 +13,9 @@ import { notFoundHandler } from './middleware/notFoundHandler.js';
 dotenv.config();
 
 export const app = express();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const frontendDir = path.resolve(__dirname, '../../frontend');
 
 app.set('trust proxy', 1);
 
@@ -29,5 +34,11 @@ app.get('/health', (_request, response) => {
 });
 
 app.use('/api', apiRouter);
+app.use(express.static(frontendDir));
+
+app.get('/', (_request, response) => {
+  response.sendFile(path.join(frontendDir, 'onboarding.html'));
+});
+
 app.use(notFoundHandler);
 app.use(errorHandler);

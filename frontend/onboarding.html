@@ -441,27 +441,10 @@
 
 </div>
 
-<script>
-  function handleGoogle() {
-    const btn = document.querySelector('.btn');
-    btn.style.opacity = '0.6';
-    btn.innerHTML = `<span class="btn-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" opacity="0.3"/><path d="M12 2a10 10 0 010 20" stroke="currentColor" stroke-width="2" stroke-linecap="round"><animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="0.8s" repeatCount="indefinite"/></path></svg></span><span class="btn-text">Connecting to Google…</span>`;
-    setTimeout(() => { window.location.href = 'terminal.html'; }, 1800);
-  }
+<script type="module">
+  import { initOnboardingPage } from './assets/js/pages/onboardingPage.js';
 
-  function handleMagicLink() {
-    const input = document.getElementById('email-input');
-    const email = input.value.trim();
-    if (!email || !email.includes('@')) {
-      input.style.borderColor = 'rgba(220,50,50,0.5)';
-      input.focus();
-      setTimeout(() => { input.style.borderColor = ''; }, 2000);
-      return;
-    }
-    document.getElementById('email-form').style.display = 'none';
-    document.getElementById('sent-email').textContent = email;
-    document.getElementById('magic-sent').classList.add('visible');
-  }
+  initOnboardingPage();
 </script>
 </body>
 </html>

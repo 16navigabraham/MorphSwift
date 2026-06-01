@@ -536,90 +536,10 @@
   </a>
 </footer>
 
-<script>
-  const rates = {
-    PHP: { symbol: '₱', toUSD: 1/56.12, rateLabel: '1 USDC = ₱56.12' },
-    USD: { symbol: '$', toUSD: 1,        rateLabel: '1 USDC = $1.00' },
-    NGN: { symbol: '₦', toUSD: 1/1580,  rateLabel: '1 USDC = ₦1,580' },
-  };
+<script type="module">
+  import { initTerminalPage } from './assets/js/pages/terminalPage.js';
 
-  let currency = 'PHP';
-  let raw = '';
-
-  // Simulate slight price drift
-  let drift = 0;
-  setInterval(() => {
-    drift = (Math.random() - 0.5) * 0.002;
-    updateConversion();
-  }, 3000);
-
-  function setCurrency(c, btn) {
-    currency = c;
-    document.querySelectorAll('.currency-tab').forEach(t => t.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById('sym').textContent = rates[c].symbol;
-    document.getElementById('rate-label').textContent = rates[c].rateLabel;
-    updateConversion();
-  }
-
-  function getDisplayVal() {
-    return raw === '' ? '0' : raw;
-  }
-
-  function keyPress(key, evt) {
-    // ripple
-    const rect = evt.currentTarget.getBoundingClientRect();
-    const r = document.createElement('div');
-    r.className = 'ripple';
-    r.style.left = (evt.clientX - rect.left) + 'px';
-    r.style.top  = (evt.clientY - rect.top) + 'px';
-    evt.currentTarget.appendChild(r);
-    setTimeout(() => r.remove(), 400);
-
-    if (key === 'del') {
-      raw = raw.slice(0, -1);
-    } else if (key === '.') {
-      if (!raw.includes('.')) raw += raw === '' ? '0.' : '.';
-    } else {
-      if (raw.length >= 10) return;
-      if (raw === '0' && key !== '.') raw = key;
-      else raw += key;
-    }
-
-    const disp = document.getElementById('display');
-    disp.textContent = getDisplayVal();
-    disp.classList.toggle('has-value', raw !== '');
-    updateConversion();
-  }
-
-  function updateConversion() {
-    const val = parseFloat(raw) || 0;
-    const r = rates[currency];
-    const usd = val * r.toUSD * (1 + drift);
-    document.getElementById('usdc-amount').textContent = usd.toFixed(2);
-    document.getElementById('usdt-amount').textContent = (usd * 0.9997).toFixed(2);
-    document.getElementById('usdt-tron').textContent   = (usd * 1.0001).toFixed(2);
-  }
-
-  function chargeNow() {
-    if (!raw || parseFloat(raw) <= 0) {
-      document.getElementById('display').style.color = '#e24b4a';
-      setTimeout(() => { document.getElementById('display').style.color = ''; }, 600);
-      return;
-    }
-    const usd = (parseFloat(raw) * rates[currency].toUSD).toFixed(2);
-    sessionStorage.setItem('chargeAmount', raw);
-    sessionStorage.setItem('chargeUSD', usd);
-    sessionStorage.setItem('chargeCurrency', currency);
-    window.location.href = 'checkout.html';
-  }
-
-  // Keyboard support
-  document.addEventListener('keydown', e => {
-    if (e.key >= '0' && e.key <= '9') keyPress(e.key, { currentTarget: { getBoundingClientRect: () => ({left:0,top:0}), appendChild: ()=>{} }, clientX: 0, clientY: 0 });
-    else if (e.key === 'Backspace') { raw = raw.slice(0,-1); document.getElementById('display').textContent = getDisplayVal(); updateConversion(); }
-    else if (e.key === 'Enter') chargeNow();
-  });
+  initTerminalPage();
 </script>
 </body>
 </html>
