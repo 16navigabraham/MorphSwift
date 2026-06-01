@@ -1,4 +1,4 @@
-import { createHash, randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto'; // createHash used for email-based pseudo wallets
 
 import { HttpError } from '../lib/httpError.js';
 import {
@@ -71,6 +71,11 @@ export async function createAuthSession({ walletAddress, email, displayName, pro
   const identity = String(walletAddress ?? email ?? '').trim();
   if (!identity) throw new HttpError(400, 'walletAddress is required');
 
+  // For wallet-connect the identity IS the real wallet address — use it directly.
+  // For email-based auth, derive a deterministic placeholder.
+  const isWalletAddress = identity.startsWith('0x') && identity.length >= 40;
+  const resolvedPayoutWallet = isWalletAddress ? identity : derivePseudoWallet(identity);
+
   let merchant = await findMerchantByIdentity(identity);
 
   if (merchant) {
@@ -79,7 +84,10 @@ export async function createAuthSession({ walletAddress, email, displayName, pro
     merchant.displayName = displayName?.trim() || merchant.displayName;
     merchant.walletAddress = merchant.walletAddress ?? identity;
     merchant.email = merchant.email ?? identity;
-    merchant.payoutWallet = merchant.payoutWallet ?? derivePseudoWallet(identity);
+    // Upgrade existing merchants that still have a pseudo wallet
+    if (!merchant.payoutWallet || !merchant.payoutWallet.startsWith('0x') || merchant.payoutWallet.length < 40) {
+      merchant.payoutWallet = resolvedPayoutWallet;
+    }
     await updateMerchant(merchant);
   } else {
     merchant = {
@@ -91,7 +99,7 @@ export async function createAuthSession({ walletAddress, email, displayName, pro
       status: 'active',
       balance: 0,
       currency: 'USDC',
-      payoutWallet: derivePseudoWallet(identity),
+      payoutWallet: resolvedPayoutWallet,
       createdAt: new Date().toISOString(),
       lastLoginAt: new Date().toISOString(),
     };

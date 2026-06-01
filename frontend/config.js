@@ -25,9 +25,13 @@ export const CONFIG = {
     merchant: 'morphswift-merchant',
     history: 'morphswift-history',
     payerReceipt: 'morphswift-payer-receipt',
-    chargeAmount: 'chargeAmount',
-    chargeUsd: 'chargeUSD',
-    chargeCurrency: 'chargeCurrency',
+    chargeAmount: 'morphswift-charge-amount',
+    chargeUsd: 'morphswift-charge-usd',
+    chargeCurrency: 'morphswift-charge-currency',
+    checkoutReference: 'morphswift-checkout-reference',
+    activeMerchant: 'morphswift-active-merchant',
+    checkoutData: 'morphswift-checkout',
+    payerReceipt: 'morphswift-payer-receipt',
   },
 
   checkout: {

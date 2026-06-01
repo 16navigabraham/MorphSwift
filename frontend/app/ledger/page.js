@@ -6,6 +6,7 @@ import { CONFIG } from '../../config.js';
 import { createWithdrawal, estimateNet } from '../../assets/js/withdraw.js';
 import { computeStats, fetchLedger, loadLocalHistory, mergeTransactions, downloadCsv, mapApiTransaction } from '../../assets/js/ledger.js';
 import { getMerchantId, getSession, loginWithWallet, saveSession } from '../../assets/js/magic.js';
+import { formatFiatSymbol } from '../../assets/js/priceFeeds.js';
 
 function dateKey(iso) {
   const d = new Date(iso);
@@ -45,6 +46,7 @@ export default function LedgerPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [destination, setDestination] = useState('');
   const [loading, setLoading] = useState(false);
+  const [serverOnline, setServerOnline] = useState(true);
 
   useEffect(() => {
     const session = getSession();
@@ -89,8 +91,9 @@ export default function LedgerPage() {
       let apiLedger = null;
       try {
         apiLedger = await fetchLedger(merchantId, 100);
+        setServerOnline(true);
       } catch {
-        // Server unreachable or merchant not found — show local history only
+        setServerOnline(false);
       }
 
       const apiTransactions = (apiLedger?.transactions ?? []).map(mapApiTransaction);
@@ -159,13 +162,18 @@ export default function LedgerPage() {
       </header>
 
       <section className="page stack">
+        {!serverOnline && (
+          <div style={{ background: 'rgba(226,75,74,0.08)', border: '1px solid rgba(226,75,74,0.25)', borderRadius: 12, padding: '10px 14px', fontSize: 12, color: '#ffb1b1' }}>
+            Server unreachable — showing local transaction history only. Balance may be outdated.
+          </div>
+        )}
         <div className="grid-2">
           <article className="summary-card">
             <p className="section-label">Revenue</p>
             <div className="metrics-grid">
-              <div className="metric"><div><div className="metric-label">Today</div><div className="metric-value">${todayRev.toFixed(2)}</div></div><div className="metric-sub">↑ {todayCount} txn{todayCount === 1 ? '' : 's'}</div></div>
-              <div className="metric"><div><div className="metric-label">7 day</div><div className="metric-value">${weekRev.toFixed(2)}</div></div><div className="metric-sub">Rolling total</div></div>
-              <div className="metric"><div><div className="metric-label">Balance</div><div className="metric-value">${balance.toFixed(2)} {CONFIG.contract.nativeCurrency}</div></div><div className="metric-sub">Withdrawable</div></div>
+              <div className="metric"><div><div className="metric-label">Today</div><div className="metric-value">{todayRev.toFixed(2)} USDC</div></div><div className="metric-sub">↑ {todayCount} txn{todayCount === 1 ? '' : 's'}</div></div>
+              <div className="metric"><div><div className="metric-label">7 day</div><div className="metric-value">{weekRev.toFixed(2)} USDC</div></div><div className="metric-sub">Rolling total</div></div>
+              <div className="metric"><div><div className="metric-label">Balance</div><div className="metric-value">{balance.toFixed(2)} USDC</div></div><div className="metric-sub">Withdrawable</div></div>
             </div>
 
             <div className="divider" />
@@ -208,7 +216,7 @@ export default function LedgerPage() {
                     <div className="day-group-header"><span>{day}</span><span className="day-total">${dayTotal.toFixed(2)}</span></div>
                     <div className="stack" style={{ gap: 10 }}>
                       {items.map((transaction) => {
-                        const fiatSymbol = transaction.fiatCurrency === 'PHP' ? '₱' : transaction.fiatCurrency === 'USD' ? '$' : transaction.fiatCurrency;
+                        const fiatSymbol = formatFiatSymbol(transaction.fiatCurrency);
                         return (
                           <div key={transaction.id} className="tx-item" onClick={() => alert(`Tx: ${transaction.hash || '—'}\nAmount: $${transaction.usdAmount.toFixed(2)} ${transaction.token}\nNetwork: ${transaction.network}\nStatus: ${transaction.status}\nTime: ${new Date(transaction.timestamp).toLocaleString()}`)}>
                             <div className={`tx-icon ${transaction.status}`}>{statusIcon(transaction.status)}</div>
@@ -249,7 +257,7 @@ export default function LedgerPage() {
             <input id="destination" className="address-input" value={destination} onChange={(event) => setDestination(event.target.value)} placeholder="0x..." />
           </div>
           <div className="modal-foot" style={{ marginTop: 14 }}>
-            <span className="tiny">Net estimate: ${estimateNet(balance).toFixed(2)} {CONFIG.contract.nativeCurrency}</span>
+            <span className="tiny">Net estimate: {estimateNet(balance).toFixed(2)} USDC</span>
             <button className="modal-confirm-btn" onClick={confirmWithdraw} disabled={loading}>{loading ? 'Processing…' : 'Confirm Withdrawal'}</button>
           </div>
         </div>

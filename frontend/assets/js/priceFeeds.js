@@ -5,11 +5,14 @@
 import { apiUrl, CONFIG } from '../../config.js';
 
 const DEMO_RATES = {
-  PHP: 56.12,
   USD: 1,
   NGN: 1580,
+  PHP: 56.12,
   SGD: 1.35,
   MYR: 4.7,
+  IDR: 15750,
+  THB: 35.8,
+  VND: 25250,
 };
 
 let cachedSettings = null;

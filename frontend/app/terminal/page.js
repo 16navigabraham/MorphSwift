@@ -75,8 +75,8 @@ function TerminalContent() {
       sessionStorage.setItem(CONFIG.storage.chargeAmount, String(amountFiat));
       sessionStorage.setItem(CONFIG.storage.chargeUsd, String(quote.stablecoinAmount));
       sessionStorage.setItem(CONFIG.storage.chargeCurrency, currency);
-      sessionStorage.setItem('morphswift-checkout', JSON.stringify(quote));
-      sessionStorage.setItem('morphswift-active-merchant', JSON.stringify(session.merchant));
+      sessionStorage.setItem(CONFIG.storage.checkoutData, JSON.stringify(quote));
+      sessionStorage.setItem(CONFIG.storage.activeMerchant, JSON.stringify(session.merchant));
       router.push('/checkout');
     } catch (err) {
       setError(err.message || 'Unable to create quote');
@@ -105,8 +105,8 @@ function TerminalContent() {
   const displayValue = raw === '' ? '0' : raw;
   const currencyLabel = useMemo(() => formatFiatSymbol(currency), [currency]);
   const rateLabel = rates?.fiatRates?.[currency]
-    ? `1 USDC = ${currencyLabel}${Number(rates.fiatRates[currency]).toLocaleString(undefined, { maximumFractionDigits: 2 })}`
-    : 'Loading rates…';
+    ? `1 USDC ≈ ${currencyLabel}${Number(rates.fiatRates[currency]).toLocaleString(undefined, { maximumFractionDigits: 2 })}`
+    : 'Connecting to server…';
 
   function pressKey(key) {
     setError('');

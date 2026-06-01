@@ -19,7 +19,7 @@ function readChargeContext() {
   const amount = sessionStorage.getItem(CONFIG.storage.chargeAmount) || '0';
   const usd = sessionStorage.getItem(CONFIG.storage.chargeUsd) || '0';
   const currency = sessionStorage.getItem(CONFIG.storage.chargeCurrency) || 'PHP';
-  const merchant = getSession().merchant || JSON.parse(sessionStorage.getItem('morphswift-active-merchant') || 'null');
+  const merchant = getSession().merchant || JSON.parse(sessionStorage.getItem(CONFIG.storage.activeMerchant) || 'null');
   return { amount, usd, currency, merchant };
 }
 
@@ -111,7 +111,7 @@ export default function CheckoutPage() {
         amountFiat: Number(context.amount),
         currency: context.currency,
         token: 'USDC',
-        reference: sessionStorage.getItem('morphswift-checkout-reference') || `ORDER-${Date.now()}`,
+        reference: sessionStorage.getItem(CONFIG.storage.checkoutReference) || `ORDER-${Date.now()}`,
       });
       if (!alive) return;
       setCheckout(created);
@@ -210,7 +210,7 @@ export default function CheckoutPage() {
       hash: tx.txHash,
     });
 
-    sessionStorage.setItem('morphswift-payer-receipt', JSON.stringify({
+    sessionStorage.setItem(CONFIG.storage.payerReceipt, JSON.stringify({
       status: 'sent',
       amount: Number(tx.stablecoinAmount ?? 0).toFixed(2),
       usdAmount: Number(tx.stablecoinAmount ?? 0).toFixed(2),

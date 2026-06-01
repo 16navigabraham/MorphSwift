@@ -14,7 +14,7 @@ function SenderContent() {
   useEffect(() => {
     let data = null;
     try {
-      data = JSON.parse(sessionStorage.getItem('morphswift-payer-receipt') || 'null');
+      data = JSON.parse(sessionStorage.getItem(CONFIG.storage.payerReceipt) || 'null');
     } catch {
       data = null;
     }
