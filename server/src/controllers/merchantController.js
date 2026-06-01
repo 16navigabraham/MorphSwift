@@ -1,4 +1,5 @@
-import { getMerchant, listMerchantLedger, listMerchants, updateMerchant } from '../services/morphService.js';
+import { getMerchant, listMerchantLedger, listMerchants } from '../services/morphService.js';
+import { updateMerchant } from '../lib/db.js';
 
 export async function getMerchantById(request, response, next) {
   try {
