@@ -6,18 +6,10 @@ import { QRCodeSVG } from 'qrcode.react';
 import { CONFIG } from '../../config.js';
 import { fetchCheckout, confirmCheckout } from '../../assets/js/chainListener.js';
 import { buildPaymentUri, shortAddress } from '../../assets/js/qrPayload.js';
-import { buildPayCheckoutUri } from '../../assets/js/gatewayContract.js';
+import { buildPayCheckoutUri, ERC20_ABI, GATEWAY_ABI } from '../../assets/js/gatewayContract.js';
 import { connectWallet, ensureCorrectNetwork, hasInjectedProvider } from '../../assets/js/wallet.js';
 import TokenLogo from '../components/TokenLogo';
 import { ethers } from 'ethers';
-
-const ERC20_ABI = [
-  'function approve(address spender, uint256 amount) returns (bool)',
-  'function allowance(address owner, address spender) view returns (uint256)',
-  'function transfer(address to, uint256 amount) returns (bool)',
-];
-
-const GATEWAY_PAY_ABI = ['function payCheckout(bytes32 checkoutId) nonpayable'];
 
 function isMobile() {
   if (typeof navigator === 'undefined') return false;
@@ -75,7 +67,8 @@ function PayContent() {
           await approveTx.wait();
         }
         setStep('paying');
-        const gateway = new ethers.Contract(CONFIG.contract.gatewayAddress, GATEWAY_PAY_ABI, signer);
+        const gatewayAbi = await GATEWAY_ABI();
+        const gateway = new ethers.Contract(CONFIG.contract.gatewayAddress, gatewayAbi, signer);
         const tx = await gateway.payCheckout(checkout.onChainCheckoutId);
         const receipt = await tx.wait();
         finalTxHash = receipt.hash;

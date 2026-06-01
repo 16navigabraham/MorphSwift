@@ -498,9 +498,11 @@ function CheckoutContent() {
               ))}
             </div>
             <div className="button-row" style={{ marginTop: 14 }}>
-              <button className="button primary" onClick={() => setOverlayVisible(true)} disabled={!confirmedTx}>
-                View receipt
-              </button>
+              {confirmedTx && (
+                <button className="button primary" onClick={() => setOverlayVisible(true)}>
+                  View receipt
+                </button>
+              )}
               <button className="button" onClick={() => router.push('/terminal')}>New payment</button>
             </div>
           </aside>

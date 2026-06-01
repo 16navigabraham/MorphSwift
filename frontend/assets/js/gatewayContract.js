@@ -12,6 +12,25 @@ import { CONFIG } from '../../config.js';
 import { loadGatewayAbi } from './contract.js';
 import { getProvider } from './wallet.js';
 
+// ─── ABIs ───────────────────────────────────────────────────────────────────
+
+export const ERC20_ABI = [
+  'function approve(address spender, uint256 amount) returns (bool)',
+  'function allowance(address owner, address spender) view returns (uint256)',
+  'function transfer(address to, uint256 amount) returns (bool)',
+  'function balanceOf(address account) view returns (uint256)',
+  'function decimals() view returns (uint8)',
+];
+
+let _gatewayAbi = null;
+
+export async function GATEWAY_ABI() {
+  if (!_gatewayAbi) {
+    _gatewayAbi = await loadGatewayAbi();
+  }
+  return _gatewayAbi;
+}
+
 // ─── helpers ────────────────────────────────────────────────────────────────
 
 async function gatewayContract(signerOrProvider) {
