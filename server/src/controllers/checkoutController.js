@@ -1,4 +1,4 @@
-import { confirmCheckout, createCheckout, getCheckout } from '../services/morphService.js';
+import { confirmCheckout, createCheckout, getCheckout, patchCheckout } from '../services/morphService.js';
 
 export async function postCheckout(request, response, next) {
   try {
@@ -24,6 +24,15 @@ export async function confirmCheckoutById(request, response, next) {
       checkoutId: request.params.checkoutId,
       txHash: request.body?.txHash,
     });
+    response.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function updateCheckoutById(request, response, next) {
+  try {
+    const result = await patchCheckout(request.params.checkoutId, request.body ?? {});
     response.status(200).json(result);
   } catch (error) {
     next(error);

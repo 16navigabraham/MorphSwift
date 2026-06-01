@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { CONFIG } from '../../config.js';
-import { createCheckout, confirmCheckout } from '../../assets/js/chainListener.js';
+import { createCheckout, confirmCheckout, fetchCheckout, patchCheckout } from '../../assets/js/chainListener.js';
 import { buildPaymentUri, shortAddress } from '../../assets/js/qrPayload.js';
 import { getSession, loginWithWallet, saveSession } from '../../assets/js/magic.js';
 import { saveLocalTransaction } from '../../assets/js/ledger.js';
@@ -14,6 +14,7 @@ import {
 } from '../../assets/js/gatewayContract.js';
 import { getSigner, hasInjectedProvider } from '../../assets/js/wallet.js';
 import WalletConnect from '../components/WalletConnect';
+import TokenLogo from '../components/TokenLogo';
 
 function readChargeContext() {
   const amount = sessionStorage.getItem(CONFIG.storage.chargeAmount) || '0';
@@ -47,11 +48,28 @@ function ensureQrScript() {
   });
 }
 
-export default function CheckoutPage() {
+function renderQr(container, text) {
+  if (!container || !window.QRCode) return;
+  container.innerHTML = '';
+  new window.QRCode(container, {
+    text,
+    width: 160,
+    height: 160,
+    colorDark: '#000000',
+    colorLight: '#ffffff',
+    correctLevel: window.QRCode.CorrectLevel.H,
+  });
+}
+
+function CheckoutContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const recoveryId = searchParams.get('id');
+
   const qrRef = useRef(null);
   const stopPollRef = useRef(null);
   const timerRef = useRef(null);
+
   const [status, setStatus] = useState('Preparing checkout…');
   const [remaining, setRemaining] = useState(CONFIG.checkout.expirySeconds);
   const [merchant, setMerchant] = useState(null);
@@ -61,6 +79,9 @@ export default function CheckoutPage() {
   const [confirmedTx, setConfirmedTx] = useState(null);
   const [onChainId, setOnChainId] = useState(null);
   const [contractPhase, setContractPhase] = useState('');
+  const [copied, setCopied] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+  const checkoutRef = useRef(null);
 
   const amountLabel = useMemo(() => {
     if (!context) return '0';
@@ -68,136 +89,40 @@ export default function CheckoutPage() {
     return `${symbol}${Number(context.amount).toLocaleString()}`;
   }, [context]);
 
-  useEffect(() => {
-    const current = readChargeContext();
-    if (!current.merchant?.id) { router.replace('/onboarding'); return; }
-    setMerchant(current.merchant);
-    setContext(current);
-  }, [router]);
+  const paymentLink = useMemo(() => {
+    if (!checkout?.id || typeof window === 'undefined') return null;
+    return `${window.location.origin}/checkout?id=${checkout.id}`;
+  }, [checkout]);
 
-  // Countdown timer
+  function copyLink() {
+    if (!paymentLink) return;
+    navigator.clipboard.writeText(paymentLink).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+
+  // Countdown timer — marks checkout expired in DB when it hits 0
   useEffect(() => {
     timerRef.current = setInterval(() => {
-      setRemaining((v) => Math.max(0, v - 1));
+      setRemaining((v) => {
+        if (v <= 1) {
+          clearInterval(timerRef.current);
+          setStatus('Checkout expired.');
+          stopPollRef.current?.();
+          const id = checkoutRef.current?.id;
+          if (id) patchCheckout(id, { status: 'expired' }).catch(() => {});
+          return 0;
+        }
+        return v - 1;
+      });
     }, 1000);
     return () => clearInterval(timerRef.current);
   }, []);
 
-  // Main checkout flow
-  useEffect(() => {
-    if (!context?.merchant?.id) return;
-    let alive = true;
-
-    (async () => {
-      // 0. Re-authenticate to ensure merchant exists in server DB.
-      //    The server DB may be fresh (restart/ephemeral disk) while the
-      //    browser still holds a stale merchantId in localStorage.
-      let activeMerchant = context.merchant;
-      const walletAddress = activeMerchant.walletAddress || activeMerchant.email;
-      if (walletAddress) {
-        try {
-          const session = await loginWithWallet(walletAddress);
-          saveSession(session);
-          activeMerchant = session.merchant;
-          setMerchant(activeMerchant);
-        } catch {
-          // non-fatal — proceed with cached merchant, will fail later if truly missing
-        }
-      }
-
-      // 1. Create checkout on the server
-      const created = await createCheckout({
-        merchantId: activeMerchant.id,
-        amountFiat: Number(context.amount),
-        currency: context.currency,
-        token: 'USDC',
-        reference: sessionStorage.getItem(CONFIG.storage.checkoutReference) || `ORDER-${Date.now()}`,
-      });
-      if (!alive) return;
-      setCheckout(created);
-      setRemaining(CONFIG.checkout.expirySeconds);
-
-      // 2. Attempt on-chain checkout creation if wallet is connected
-      let resolvedOnChainId = null;
-      if (hasInjectedProvider()) {
-        try {
-          const signer = await getSigner();
-          if (signer) {
-            setContractPhase('Check MetaMask — approve registration if prompted…');
-            const { onChainCheckoutId } = await createCheckoutOnChain(signer, {
-              serverCheckoutId: created.id,
-              stablecoinAmount: created.stablecoinAmount,
-            });
-            resolvedOnChainId = onChainCheckoutId;
-            setOnChainId(onChainCheckoutId);
-            setContractPhase('On-chain checkout active.');
-          }
-        } catch (err) {
-          setContractPhase(`On-chain unavailable: ${err.shortMessage || err.message}`);
-        }
-      }
-
-      // 3. Render QR — prefer payCheckout URI if on-chain id available
-      const qrReady = await ensureQrScript();
-      if (alive && qrReady && qrRef.current) {
-        qrRef.current.innerHTML = '';
-        const qrText = resolvedOnChainId
-          ? buildPayCheckoutUri(resolvedOnChainId)
-          : buildPaymentUri({
-              address: created.payoutWallet || created.merchantId,
-              amount: created.stablecoinAmount,
-              token: created.token,
-              network: created.network || CONFIG.settlementNetwork,
-            });
-        new window.QRCode(qrRef.current, {
-          text: qrText,
-          width: 160,
-          height: 160,
-          colorDark: '#000000',
-          colorLight: '#ffffff',
-          correctLevel: window.QRCode.CorrectLevel.H,
-        });
-      }
-
-      // 4a. If on-chain — poll for real CheckoutPaid event
-      if (resolvedOnChainId) {
-        setStatus('Waiting for on-chain payment…');
-        stopPollRef.current = pollCheckoutPaid(resolvedOnChainId, {
-          intervalMs: CONFIG.checkout.pollIntervalMs,
-          timeoutMs: CONFIG.checkout.expirySeconds * 1000,
-          onPaid: async ({ txHash }) => {
-            if (!alive) return;
-            await handleConfirmed(created, txHash ?? randomHash());
-          },
-          onError: (err) => {
-            if (alive) setStatus(err.message || 'Payment polling failed');
-          },
-        });
-        return;
-      }
-
-      // 4b. Fallback — simulate confirmation after 4 s (no wallet / no contract)
-      setStatus('Listening for transaction…');
-      setTimeout(async () => {
-        if (!alive) return;
-        await handleConfirmed(created, randomHash()).catch((err) => {
-          setStatus(err.message || 'Payment failed');
-        });
-      }, 4000);
-    })().catch((err) => {
-      if (alive) setStatus(err.message || 'Unable to create checkout');
-    });
-
-    return () => {
-      alive = false;
-      stopPollRef.current?.();
-    };
-  }, [context]);
-
-  async function handleConfirmed(created, txHash) {
-    const receipt = await confirmCheckout(created.id, txHash);
+  async function handleConfirmed(co, txHash) {
+    const receipt = await confirmCheckout(co.id, txHash);
     const tx = receipt.transaction;
-
     saveLocalTransaction({
       id: tx.id,
       timestamp: tx.confirmedAt,
@@ -209,27 +134,183 @@ export default function CheckoutPage() {
       status: 'confirmed',
       hash: tx.txHash,
     });
-
     sessionStorage.setItem(CONFIG.storage.payerReceipt, JSON.stringify({
       status: 'sent',
       amount: Number(tx.stablecoinAmount ?? 0).toFixed(2),
-      usdAmount: Number(tx.stablecoinAmount ?? 0).toFixed(2),
       token: tx.token ?? 'USDC',
       network: CONFIG.settlementNetwork,
-      merchant: receipt.merchant?.displayName ?? created.merchantName ?? 'Merchant',
-      merchantName: receipt.merchant?.displayName ?? created.merchantName ?? 'Merchant',
+      merchant: receipt.merchant?.displayName ?? co.merchantName ?? 'Merchant',
+      merchantName: receipt.merchant?.displayName ?? co.merchantName ?? 'Merchant',
       fiatAmount: Number(tx.amountFiat ?? 0),
       fiatCurrency: tx.currency ?? 'USD',
       txHash: tx.txHash,
-      narration: created.reference ?? '',
+      narration: co.reference ?? '',
       timestamp: tx.confirmedAt,
     }));
-
     setConfirmedTx(tx);
     setOverlayVisible(true);
     setStatus(`Confirmed on ${CONFIG.settlementNetwork}.`);
     clearInterval(timerRef.current);
   }
+
+  async function startPollingOrFallback(co, resolvedOnChainId) {
+    if (resolvedOnChainId) {
+      setStatus('Waiting for on-chain payment…');
+      stopPollRef.current = pollCheckoutPaid(resolvedOnChainId, {
+        intervalMs: CONFIG.checkout.pollIntervalMs,
+        timeoutMs: CONFIG.checkout.expirySeconds * 1000,
+        onPaid: async ({ txHash }) => await handleConfirmed(co, txHash ?? randomHash()),
+        onError: (err) => setStatus(err.message || 'Payment polling failed'),
+      });
+    } else {
+      // No wallet connected — merchant must confirm manually after receiving payment
+      setStatus('Waiting for payment — confirm manually when received.');
+    }
+  }
+
+  async function setupQr(co, resolvedOnChainId) {
+    const qrReady = await ensureQrScript();
+    if (!qrReady || !qrRef.current) return;
+    const qrText = resolvedOnChainId
+      ? buildPayCheckoutUri(resolvedOnChainId)
+      : buildPaymentUri({
+          address: co.payoutWallet || co.merchantId,
+          amount: co.stablecoinAmount,
+          token: co.token,
+          network: co.network || CONFIG.settlementNetwork,
+        });
+    renderQr(qrRef.current, qrText);
+  }
+
+  // Recovery path — load existing checkout from URL ?id=
+  useEffect(() => {
+    if (!recoveryId) return;
+    const session = getSession();
+    if (session.merchant) setMerchant(session.merchant);
+    let alive = true;
+
+    (async () => {
+      setStatus('Loading checkout…');
+      const co = await fetchCheckout(recoveryId);
+      if (!alive) return;
+
+      if (co.status === 'confirmed') {
+        setCheckout(co);
+        setStatus(`Already confirmed on ${CONFIG.settlementNetwork}.`);
+        return;
+      }
+
+      setCheckout(co);
+      checkoutRef.current = co;
+      setContext({
+        amount: co.amountFiat,
+        usd: co.stablecoinAmount,
+        currency: co.currency,
+        merchant: session.merchant,
+      });
+
+      // Restore remaining time from expiresAt if available
+      if (co.expiresAt) {
+        const secsLeft = Math.max(0, Math.floor((new Date(co.expiresAt) - Date.now()) / 1000));
+        setRemaining(secsLeft);
+        if (secsLeft === 0) {
+          setStatus('Checkout expired.');
+          return;
+        }
+      } else {
+        setRemaining(CONFIG.checkout.expirySeconds);
+      }
+
+      const resumeOnChainId = co.onChainCheckoutId ?? null;
+      if (resumeOnChainId) setOnChainId(resumeOnChainId);
+
+      await setupQr(co, resumeOnChainId);
+      await startPollingOrFallback(co, resumeOnChainId);
+    })().catch((err) => {
+      if (alive) setStatus(err.message || 'Could not load checkout');
+    });
+
+    return () => { alive = false; stopPollRef.current?.(); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recoveryId]);
+
+  // Normal creation path
+  useEffect(() => {
+    if (recoveryId) return;
+    const current = readChargeContext();
+    if (!current.merchant?.id) { router.replace('/onboarding'); return; }
+    setMerchant(current.merchant);
+    setContext(current);
+  }, [router, recoveryId]);
+
+  useEffect(() => {
+    if (recoveryId || !context?.merchant?.id) return;
+    let alive = true;
+
+    (async () => {
+      // Re-auth to ensure merchant exists in server DB
+      let activeMerchant = context.merchant;
+      const walletAddress = activeMerchant.walletAddress || activeMerchant.email;
+      if (walletAddress) {
+        try {
+          const session = await loginWithWallet(walletAddress);
+          saveSession(session);
+          activeMerchant = session.merchant;
+          setMerchant(activeMerchant);
+        } catch { /* use cached */ }
+      }
+
+      // Create on server
+      const created = await createCheckout({
+        merchantId: activeMerchant.id,
+        amountFiat: Number(context.amount),
+        currency: context.currency,
+        token: 'USDC',
+        reference: sessionStorage.getItem(CONFIG.storage.checkoutReference) || `ORDER-${Date.now()}`,
+      });
+      if (!alive) return;
+      setCheckout(created);
+      checkoutRef.current = created;
+      setRemaining(CONFIG.checkout.expirySeconds);
+
+      // Update URL so the link is shareable / recoverable
+      window.history.replaceState({}, '', `/checkout?id=${created.id}`);
+
+      // Try on-chain registration
+      let resolvedOnChainId = null;
+      if (hasInjectedProvider()) {
+        try {
+          const signer = await getSigner();
+          if (signer) {
+            setContractPhase('Check MetaMask — approve if prompted…');
+            const expiresAt = new Date(Date.now() + CONFIG.checkout.expirySeconds * 1000).toISOString();
+            const { onChainCheckoutId } = await createCheckoutOnChain(signer, {
+              serverCheckoutId: created.id,
+              stablecoinAmount: created.stablecoinAmount,
+            });
+            resolvedOnChainId = onChainCheckoutId;
+            setOnChainId(onChainCheckoutId);
+            setContractPhase('On-chain checkout active.');
+            // Persist the on-chain ID so recovery can resume polling
+            patchCheckout(created.id, { onChainCheckoutId, expiresAt }).catch(() => {});
+          }
+        } catch (err) {
+          setContractPhase(`On-chain unavailable: ${err.shortMessage || err.message}`);
+        }
+      }
+
+      await setupQr(created, resolvedOnChainId);
+      if (alive) await startPollingOrFallback(created, resolvedOnChainId);
+    })().catch((err) => {
+      if (alive) setStatus(err.message || 'Unable to create checkout');
+    });
+
+    return () => {
+      alive = false;
+      stopPollRef.current?.();
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [context]);
 
   const timerText = remaining > 0
     ? `${String(Math.floor(remaining / 60)).padStart(2, '0')}:${String(remaining % 60).padStart(2, '0')}`
@@ -255,44 +336,95 @@ export default function CheckoutPage() {
             <div className="amount-strip" style={{ padding: 0, border: 0, marginBottom: 12 }}>
               <div>
                 <div className="section-label">Amount due</div>
-                <div className="amount-strip-value" style={{ fontSize: 'clamp(20px, 5vw, 34px)', letterSpacing: '-0.05em', fontFamily: 'var(--font-display), system-ui, sans-serif', fontWeight: 800 }}>
+                <div style={{ fontFamily: 'var(--font-display), system-ui, sans-serif', fontWeight: 800, fontSize: 'clamp(20px, 5vw, 32px)', letterSpacing: '-0.05em' }}>
                   {amountLabel}
                 </div>
-                <div className="help">{Number(context?.usd || 0).toFixed(2)} USDC</div>
+                <div className="help" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <TokenLogo token={checkout?.token || 'USDC'} size={13} />
+                  {Number(context?.usd || 0).toFixed(2)} {checkout?.token || 'USDC'}
+                </div>
               </div>
               <div className="pill" style={{ fontSize: 11 }}>
                 <span className="badge-icon">●</span>{CONFIG.settlementNetwork}
               </div>
             </div>
 
-            <div className="qr-shell" style={{ width: 'fit-content', margin: '18px auto 10px' }}>
+            <div className="qr-shell" style={{ width: 'fit-content', margin: '16px auto 10px' }}>
               <div className="scan-ring" />
               <div className="qr-box" ref={qrRef} />
             </div>
 
             {onChainId && (
-              <p style={{ textAlign: 'center', fontSize: 10, color: 'var(--amber)', marginBottom: 8 }}>
+              <p style={{ textAlign: 'center', fontSize: 10, color: 'var(--amber)', marginBottom: 6 }}>
                 On-chain checkout active — scan to pay via gateway
               </p>
             )}
 
-            <div className="wallet-row" style={{ marginTop: 12 }}>
-              <div>
-                <div className="section-label">Recipient</div>
-                <div style={{ fontSize: 14, fontWeight: 700, letterSpacing: '-0.03em' }}>
-                  {shortAddress(context?.merchant?.payoutWallet || checkout?.payoutWallet || merchant?.id || '')}
-                </div>
+            {/* Payment link row */}
+            <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+              <div style={{ flex: 1, background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', borderRadius: 10, padding: '7px 10px', fontSize: 11, color: 'var(--muted)', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
+                {paymentLink ?? 'Generating link…'}
               </div>
-              <button className="button" style={{ fontSize: 12 }}
-                onClick={() => navigator.clipboard?.writeText(checkout?.qrPayload ?? '').catch(() => {})}>
+              <button
+                className="button"
+                style={{ fontSize: 11, padding: '7px 12px', flexShrink: 0 }}
+                onClick={copyLink}
+                disabled={!paymentLink}
+              >
+                {copied ? 'Copied!' : 'Copy link'}
+              </button>
+              <button
+                className="button"
+                style={{ fontSize: 11, padding: '7px 12px', flexShrink: 0 }}
+                onClick={() => navigator.clipboard?.writeText(checkout?.qrPayload ?? '').catch(() => {})}
+                disabled={!checkout}
+              >
                 Copy QR
               </button>
             </div>
 
-            <div className="divider" />
+            <div className="divider" style={{ margin: '10px 0' }} />
+
+            <div className="wallet-row">
+              <div>
+                <div className="section-label">Recipient</div>
+                <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: '-0.03em' }}>
+                  {shortAddress(context?.merchant?.payoutWallet || checkout?.payoutWallet || merchant?.id || '')}
+                </div>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ fontSize: 10, color: 'var(--muted)', marginBottom: 2 }}>Checkout ID</div>
+                <div style={{ fontSize: 10, color: 'var(--muted-2)', fontFamily: 'monospace' }}>
+                  {checkout?.id ?? '—'}
+                </div>
+              </div>
+            </div>
+
+            <div className="divider" style={{ margin: '10px 0' }} />
             <p className="hero-subtitle" style={{ fontSize: 12 }}>{status}</p>
             {contractPhase && (
               <p style={{ fontSize: 11, color: 'var(--muted)', marginTop: 4 }}>{contractPhase}</p>
+            )}
+
+            {/* Manual confirm — shown when no on-chain polling is active */}
+            {!onChainId && checkout && !confirmedTx && (
+              <button
+                className="button primary"
+                style={{ width: '100%', marginTop: 10, fontSize: 13 }}
+                disabled={confirming}
+                onClick={async () => {
+                  setConfirming(true);
+                  try {
+                    await handleConfirmed(checkoutRef.current ?? checkout, randomHash());
+                  } catch (err) {
+                    setStatus(err.message || 'Confirmation failed');
+                  } finally {
+                    setConfirming(false);
+                  }
+                }}
+              >
+                {confirming ? 'Confirming…' : 'Mark as received'}
+              </button>
             )}
           </article>
 
@@ -300,13 +432,16 @@ export default function CheckoutPage() {
             <p className="section-label">Settlement summary</p>
             <div style={{ display: 'grid', gap: 8 }}>
               {[
-                { label: 'Token', value: checkout?.token || 'USDC' },
+                { label: 'Token', value: checkout?.token || 'USDC', token: checkout?.token || 'USDC' },
                 { label: 'Network', value: CONFIG.settlementNetwork },
                 { label: 'Merchant', value: context?.merchant?.displayName || merchant?.displayName || 'Merchant' },
-              ].map(({ label, value }) => (
+              ].map(({ label, value, token }) => (
                 <div key={label} className="metric">
                   <div className="metric-label">{label}</div>
-                  <div className="metric-value" style={{ fontSize: 16 }}>{value}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-display), system-ui, sans-serif', fontSize: 15, fontWeight: 800, letterSpacing: '-0.04em' }}>
+                    {token && <TokenLogo token={token} size={16} />}
+                    {value}
+                  </div>
                 </div>
               ))}
             </div>
@@ -323,14 +458,17 @@ export default function CheckoutPage() {
       <div className={`overlay ${overlayVisible ? 'visible' : ''}`}>
         <div className="overlay-card">
           <p className="section-label">Payment confirmed</p>
-          <h2 className="hero-title" style={{ fontSize: 'clamp(22px, 5vw, 36px)' }}>Settlement complete.</h2>
+          <h2 className="hero-title" style={{ fontSize: 'clamp(20px, 5vw, 34px)' }}>Settlement complete.</h2>
           <p className="hero-subtitle">
             Confirmed on {CONFIG.settlementNetwork} for {context?.merchant?.displayName || merchant?.displayName || 'the merchant'}.
           </p>
           <div className="summary-card" style={{ marginTop: 12 }}>
             <div className="receipt-row">
               <span className="muted" style={{ fontSize: 12 }}>Amount</span>
-              <strong>{Number(confirmedTx?.stablecoinAmount || context?.usd || 0).toFixed(2)} USDC</strong>
+              <strong style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <TokenLogo token={confirmedTx?.token || 'USDC'} size={14} />
+                {Number(confirmedTx?.stablecoinAmount || context?.usd || 0).toFixed(2)} {confirmedTx?.token || 'USDC'}
+              </strong>
             </div>
             <div className="receipt-row" style={{ marginTop: 8 }}>
               <span className="muted" style={{ fontSize: 12 }}>Tx hash</span>
@@ -345,5 +483,13 @@ export default function CheckoutPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense fallback={null}>
+      <CheckoutContent />
+    </Suspense>
   );
 }

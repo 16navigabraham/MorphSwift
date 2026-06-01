@@ -67,7 +67,9 @@ export async function initDb() {
       reference TEXT,
       tx_hash TEXT,
       network TEXT,
-      confirmation_state TEXT
+      confirmation_state TEXT,
+      on_chain_checkout_id TEXT,
+      expires_at TEXT
     );
 
     CREATE TABLE IF NOT EXISTS transactions (
@@ -96,6 +98,14 @@ export async function initDb() {
       completed_at TEXT NOT NULL
     );
   `);
+
+  // Migrate existing checkouts table — add columns if they don't exist yet
+  for (const col of [
+    `ALTER TABLE checkouts ADD COLUMN on_chain_checkout_id TEXT`,
+    `ALTER TABLE checkouts ADD COLUMN expires_at TEXT`,
+  ]) {
+    try { await db.execute(col); } catch { /* column already exists */ }
+  }
 
   // Upsert settings — also patches existing rows when currencies/rates change
   await db.execute({
@@ -160,8 +170,8 @@ export async function updateMerchant(merchant) {
 export async function insertCheckout(checkout) {
   const db = getClient();
   await db.execute({
-    sql: `INSERT INTO checkouts (id, merchant_id, merchant_wallet_address, merchant_name, payout_wallet, status, amount_fiat, currency, token, stablecoin_amount, exchange_rate, network_fee_usd, platform_fee_usd, display_amount, qr_payload, created_at, confirmed_at, reference, tx_hash, network, confirmation_state)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    sql: `INSERT INTO checkouts (id, merchant_id, merchant_wallet_address, merchant_name, payout_wallet, status, amount_fiat, currency, token, stablecoin_amount, exchange_rate, network_fee_usd, platform_fee_usd, display_amount, qr_payload, created_at, confirmed_at, reference, tx_hash, network, confirmation_state, on_chain_checkout_id, expires_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     args: [
       checkout.id, checkout.merchantId, checkout.merchantWalletAddress, checkout.merchantName,
       checkout.payoutWallet, checkout.status, checkout.amountFiat, checkout.currency,
@@ -169,6 +179,7 @@ export async function insertCheckout(checkout) {
       checkout.platformFeeUsd, checkout.displayAmount, checkout.qrPayload, checkout.createdAt,
       checkout.confirmedAt ?? null, checkout.reference ?? null, checkout.txHash ?? null,
       checkout.network ?? null, checkout.confirmationState ?? null,
+      checkout.onChainCheckoutId ?? null, checkout.expiresAt ?? null,
     ],
   });
 }
@@ -190,6 +201,22 @@ export async function updateCheckout(checkout) {
       checkout.status, checkout.confirmedAt ?? null, checkout.txHash ?? null,
       checkout.network ?? null, checkout.confirmationState ?? null, checkout.id,
     ],
+  });
+}
+
+export async function saveCheckoutOnChainId(id, onChainCheckoutId, expiresAt) {
+  const db = getClient();
+  await db.execute({
+    sql: `UPDATE checkouts SET on_chain_checkout_id=?, expires_at=? WHERE id=?`,
+    args: [onChainCheckoutId, expiresAt ?? null, id],
+  });
+}
+
+export async function expireCheckout(id) {
+  const db = getClient();
+  await db.execute({
+    sql: `UPDATE checkouts SET status='expired' WHERE id=? AND status='pending'`,
+    args: [id],
   });
 }
 
@@ -238,7 +265,7 @@ export async function getWithdrawalsByMerchant(merchantId, limit = 20) {
 export async function getCheckoutsByMerchant(merchantId) {
   const db = getClient();
   const result = await db.execute({
-    sql: `SELECT * FROM checkouts WHERE merchant_id = ? AND status = 'pending'`,
+    sql: `SELECT * FROM checkouts WHERE merchant_id = ? AND status IN ('pending', 'expired') ORDER BY created_at DESC`,
     args: [merchantId],
   });
   return result.rows.map(rowToCheckout);
@@ -290,6 +317,8 @@ function rowToCheckout(row) {
     txHash: row.tx_hash,
     network: row.network,
     confirmationState: row.confirmation_state,
+    onChainCheckoutId: row.on_chain_checkout_id ?? null,
+    expiresAt: row.expires_at ?? null,
   };
 }
 

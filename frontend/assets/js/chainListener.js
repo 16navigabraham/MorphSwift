@@ -45,3 +45,16 @@ export async function confirmCheckout(checkoutId, txHash) {
   return res.json();
 }
 
+export async function patchCheckout(checkoutId, body) {
+  const res = await fetchWithTimeout(apiUrl(`checkouts/${checkoutId}`), {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  }, 8000);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message ?? `Patch failed (${res.status})`);
+  }
+  return res.json();
+}
+

@@ -9,6 +9,8 @@ import {
   insertCheckout,
   getCheckoutById,
   updateCheckout,
+  saveCheckoutOnChainId,
+  expireCheckout,
   insertTransaction,
   getTransactionsByMerchant,
   getWithdrawalsByMerchant,
@@ -145,6 +147,7 @@ export async function listMerchantLedger(merchantId, limit = 20) {
     balance: round(merchant.balance, 6),
     transactions,
     withdrawals,
+    pendingCheckouts,
   };
 }
 
@@ -318,6 +321,28 @@ export async function createWithdrawal(input) {
     withdrawal,
     merchant: serializeMerchant(merchant, pendingCheckouts.length, transactions.length),
   };
+}
+
+/**
+ * PATCH /api/checkouts/:id
+ * Accepts: { onChainCheckoutId, expiresAt } — save on-chain ID after contract call
+ *          { status: 'expired' }             — mark expired when timer hits 0
+ */
+export async function patchCheckout(checkoutId, body) {
+  const checkout = await getCheckoutById(checkoutId);
+  if (!checkout) throw new HttpError(404, 'Checkout not found');
+
+  if (body.status === 'expired') {
+    await expireCheckout(checkoutId);
+    return { ...checkout, status: 'expired' };
+  }
+
+  if (body.onChainCheckoutId) {
+    await saveCheckoutOnChainId(checkoutId, body.onChainCheckoutId, body.expiresAt ?? null);
+    return { ...checkout, onChainCheckoutId: body.onChainCheckoutId, expiresAt: body.expiresAt };
+  }
+
+  throw new HttpError(400, 'Nothing to update');
 }
 
 export async function listMerchants() {

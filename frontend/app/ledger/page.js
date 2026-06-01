@@ -50,6 +50,8 @@ export default function LedgerPage() {
   const [loading, setLoading] = useState(false);
   const [serverOnline, setServerOnline] = useState(true);
   const [onChainBalance, setOnChainBalance] = useState({ usdc: null, usdt: null });
+  const [selectedTx, setSelectedTx] = useState(null);
+  const [pendingCheckouts, setPendingCheckouts] = useState([]);
 
   useEffect(() => {
     const session = getSession();
@@ -100,6 +102,7 @@ export default function LedgerPage() {
       try {
         apiLedger = await fetchLedger(merchantId, 100);
         setServerOnline(true);
+        setPendingCheckouts(apiLedger?.pendingCheckouts ?? []);
       } catch {
         setServerOnline(false);
       }
@@ -215,6 +218,68 @@ export default function LedgerPage() {
           </article>
 
           <article className="summary-card">
+            {pendingCheckouts.length > 0 && (() => {
+              const pending = pendingCheckouts.filter((c) => c.status === 'pending');
+              const expired = pendingCheckouts.filter((c) => c.status === 'expired');
+              return (
+                <>
+                  {pending.length > 0 && (
+                    <>
+                      <p className="section-label">Pending payments</p>
+                      <div className="tx-list" style={{ marginBottom: 10 }}>
+                        {pending.map((co) => (
+                          <a key={co.id} href={`/checkout?id=${co.id}`} style={{ textDecoration: 'none' }}>
+                            <div className="tx-item" style={{ borderColor: 'rgba(242,173,61,0.3)' }}>
+                              <div className="tx-icon pending">◷</div>
+                              <div className="tx-info">
+                                <div className="tx-primary">
+                                  <span className="tx-amount">{Number(co.stablecoinAmount).toFixed(2)}</span>
+                                  <span className="tx-token" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                                    <TokenLogo token={co.token} size={14} />{co.token}
+                                  </span>
+                                  <span className="tx-fiat">{formatFiatSymbol(co.currency)}{Number(co.amountFiat).toLocaleString()}</span>
+                                </div>
+                                <div className="tx-secondary">
+                                  <span>{fmtTime(co.createdAt)}</span>
+                                  <span style={{ fontSize: 10, color: 'var(--amber)' }}>Tap to open →</span>
+                                </div>
+                              </div>
+                              <span className="status-pill pending">pending</span>
+                            </div>
+                          </a>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                  {expired.length > 0 && (
+                    <>
+                      <p className="section-label" style={{ marginTop: 10 }}>Expired</p>
+                      <div className="tx-list" style={{ marginBottom: 10 }}>
+                        {expired.map((co) => (
+                          <div key={co.id} className="tx-item" style={{ opacity: 0.6 }}>
+                            <div className="tx-icon failed">✕</div>
+                            <div className="tx-info">
+                              <div className="tx-primary">
+                                <span className="tx-amount">{Number(co.stablecoinAmount).toFixed(2)}</span>
+                                <span className="tx-token" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                                  <TokenLogo token={co.token} size={14} />{co.token}
+                                </span>
+                                <span className="tx-fiat">{formatFiatSymbol(co.currency)}{Number(co.amountFiat).toLocaleString()}</span>
+                              </div>
+                              <div className="tx-secondary">
+                                <span>{fmtTime(co.createdAt)}</span>
+                              </div>
+                            </div>
+                            <span className="status-pill failed">expired</span>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                  <div className="divider" />
+                </>
+              );
+            })()}
             <p className="section-label">Transactions</p>
             <div className="filter-row">
               {['all', 'confirmed', 'pending', 'failed'].map((item) => (
@@ -243,7 +308,7 @@ export default function LedgerPage() {
                       {items.map((transaction) => {
                         const fiatSymbol = formatFiatSymbol(transaction.fiatCurrency);
                         return (
-                          <div key={transaction.id} className="tx-item" onClick={() => alert(`Tx: ${transaction.hash || '—'}\nAmount: $${transaction.usdAmount.toFixed(2)} ${transaction.token}\nNetwork: ${transaction.network}\nStatus: ${transaction.status}\nTime: ${new Date(transaction.timestamp).toLocaleString()}`)}>
+                          <div key={transaction.id} className="tx-item" onClick={() => setSelectedTx(transaction)}>
                             <div className={`tx-icon ${transaction.status}`}>{statusIcon(transaction.status)}</div>
                             <div className="tx-info">
                               <div className="tx-primary">
@@ -273,6 +338,7 @@ export default function LedgerPage() {
         </div>
       </section>
 
+      {/* Withdraw modal */}
       <div className={`modal-backdrop ${modalOpen ? 'open' : ''}`} onClick={(event) => event.target === event.currentTarget && setModalOpen(false)}>
         <div className="modal">
           <div className="modal-head">
@@ -289,6 +355,69 @@ export default function LedgerPage() {
             <button className="modal-confirm-btn" onClick={confirmWithdraw} disabled={loading}>{loading ? 'Processing…' : 'Confirm Withdrawal'}</button>
           </div>
         </div>
+      </div>
+
+      {/* Transaction receipt modal */}
+      <div className={`modal-backdrop ${selectedTx ? 'open' : ''}`} onClick={(e) => e.target === e.currentTarget && setSelectedTx(null)}>
+        {selectedTx && (
+          <div className="modal">
+            <div className="modal-head">
+              <h3 style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div className={`tx-icon ${selectedTx.status}`} style={{ width: 28, height: 28, fontSize: 13 }}>
+                  {statusIcon(selectedTx.status)}
+                </div>
+                Receipt
+              </h3>
+              <button className="button ghost" onClick={() => setSelectedTx(null)}>✕</button>
+            </div>
+
+            <div style={{ display: 'grid', gap: 10, marginTop: 14 }}>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 4 }}>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                    <TokenLogo token={selectedTx.token} size={28} />
+                    <span style={{ fontFamily: 'var(--font-display), system-ui, sans-serif', fontSize: 36, fontWeight: 800, letterSpacing: '-0.06em' }}>
+                      {selectedTx.usdAmount.toFixed(2)}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>{selectedTx.token}</div>
+                </div>
+              </div>
+
+              {[
+                { label: 'Status', value: <span className={`status-pill ${selectedTx.status}`}>{selectedTx.status}</span> },
+                { label: 'Fiat amount', value: `${formatFiatSymbol(selectedTx.fiatCurrency)}${Number(selectedTx.fiatAmount).toLocaleString()} ${selectedTx.fiatCurrency}` },
+                { label: 'Network', value: selectedTx.network },
+                { label: 'Date', value: new Date(selectedTx.timestamp).toLocaleString() },
+                { label: 'Tx hash', value: selectedTx.hash || '—', mono: true },
+              ].map(({ label, value, mono }) => (
+                <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid var(--border-soft)' }}>
+                  <span style={{ fontSize: 12, color: 'var(--muted)' }}>{label}</span>
+                  <span style={{ fontSize: mono ? 11 : 13, fontFamily: mono ? 'monospace' : 'inherit', fontWeight: 600, wordBreak: 'break-all', textAlign: 'right', maxWidth: '60%' }}>
+                    {value}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <div className="button-row" style={{ marginTop: 16 }}>
+              {selectedTx.hash && selectedTx.hash !== '—' && (
+                <a
+                  className="button primary"
+                  href={`${CONFIG.contract.blockExplorerUrls[0]}/tx/${selectedTx.hash}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  View on explorer
+                </a>
+              )}
+              <button className="button" onClick={() => navigator.clipboard?.writeText(selectedTx.hash || '').catch(() => {})}>
+                Copy hash
+              </button>
+              <button className="button ghost" onClick={() => setSelectedTx(null)}>Close</button>
+            </div>
+          </div>
+        )}
       </div>
     </main>
   );
