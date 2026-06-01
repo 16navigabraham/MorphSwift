@@ -6,6 +6,7 @@ const backendUrl = process.env.BACKEND_URL || 'http://localhost:4000';
 const nextConfig = {
   reactStrictMode: true,
   outputFileTracingRoot: path.join(__dirname, '..'),
+  allowedDevOrigins: ['172.17.64.1'],
   async rewrites() {
     return [
       {

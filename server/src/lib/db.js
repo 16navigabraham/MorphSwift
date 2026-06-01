@@ -16,9 +16,9 @@ const DEFAULT_SETTINGS = JSON.stringify({
   brandName: 'MorphSwift',
   networkName: 'Morph',
   settlementTargetSeconds: 3,
-  supportedCurrencies: ['USD', 'PHP', 'SGD', 'MYR', 'IDR', 'THB', 'VND'],
+  supportedCurrencies: ['USD', 'NGN', 'PHP', 'SGD', 'MYR', 'IDR', 'THB', 'VND'],
   supportedStablecoins: ['USDC', 'USDT'],
-  fiatRates: { USD: 1, PHP: 56.2, SGD: 1.35, MYR: 4.7, IDR: 15750, THB: 35.8, VND: 25250 },
+  fiatRates: { USD: 1, NGN: 1580, PHP: 56.2, SGD: 1.35, MYR: 4.7, IDR: 15750, THB: 35.8, VND: 25250 },
   tokenRates: { USDC: 1, USDT: 1 },
   feeModel: { networkBps: 8, platformBps: 12, minimumNetworkFeeUsd: 0.003 },
 });
@@ -97,8 +97,12 @@ export async function initDb() {
     );
   `);
 
+  // Upsert settings — also patches existing rows when currencies/rates change
   await db.execute({
-    sql: `INSERT OR IGNORE INTO settings (id, data) VALUES (1, ?)`,
+    sql: `INSERT INTO settings (id, data) VALUES (1, ?)
+          ON CONFLICT(id) DO UPDATE SET data = excluded.data
+          WHERE json_extract(excluded.data, '$.fiatRates.NGN') IS NOT NULL
+            AND json_extract(settings.data, '$.fiatRates.NGN') IS NULL`,
     args: [DEFAULT_SETTINGS],
   });
 }
