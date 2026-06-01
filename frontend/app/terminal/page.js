@@ -11,7 +11,9 @@ import {
   quoteStablecoin,
   loadPriceSettings,
 } from '../../assets/js/priceFeeds.js';
+import { fetchOnChainBalances } from '../../assets/js/gatewayContract.js';
 import WalletConnect from '../components/WalletConnect';
+import TokenLogo from '../components/TokenLogo';
 
 const CURRENCIES = ['PHP', 'USD', 'NGN', 'SGD'];
 
@@ -36,6 +38,7 @@ function TerminalContent() {
   const [rates, setRates] = useState(null);
   const [merchant, setMerchant] = useState(null);
   const [conversion, setConversion] = useState({ USDC: 0, USDT: 0, usd: 0 });
+  const [onChainBalance, setOnChainBalance] = useState({ usdc: null, usdt: null });
   const [error, setError] = useState('');
   const [charging, setCharging] = useState(false);
   const rawRef = useRef(raw);
@@ -46,6 +49,13 @@ function TerminalContent() {
     if (!session.merchant) { router.replace('/onboarding'); return; }
     setMerchant(session.merchant);
     loadPriceSettings().then(setRates).catch(() => setRates(null));
+
+    const walletAddress = session.merchant.walletAddress || session.merchant.payoutWallet;
+    if (walletAddress?.startsWith('0x')) {
+      fetchOnChainBalances(walletAddress)
+        .then(setOnChainBalance)
+        .catch(() => {});
+    }
   }, [router]);
 
   useEffect(() => {
@@ -233,19 +243,29 @@ function TerminalContent() {
 
         {/* Desktop sidebar */}
         <aside className="terminal-sidebar">
-          {/* Balance */}
+          {/* On-chain wallet balance */}
           <div className="card">
-            <p className="section-label">Balance</p>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 2 }}>
-              <span style={{ fontFamily: 'var(--font-display), system-ui, sans-serif', fontSize: 24, fontWeight: 800, letterSpacing: '-0.05em' }}>
-                {Number(merchant?.balance ?? 0).toFixed(2)}
-              </span>
-              <span style={{ fontSize: 11, color: 'var(--muted)' }}>USDC</span>
-            </div>
-            <p style={{ fontSize: 11, color: 'var(--muted)', margin: '0 0 10px' }}>
-              {merchant?.displayName || merchant?.walletAddress || '—'}
+            <p className="section-label">Wallet balance</p>
+            {[
+              { token: 'USDC', value: onChainBalance.usdc },
+              { token: 'USDT', value: onChainBalance.usdt },
+            ].map(({ token, value }) => (
+              <div key={token} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <TokenLogo token={token} size={18} />
+                  <span style={{ fontSize: 11, color: 'var(--muted)' }}>{token}</span>
+                </div>
+                <span style={{ fontFamily: 'var(--font-display), system-ui, sans-serif', fontSize: 18, fontWeight: 800, letterSpacing: '-0.05em' }}>
+                  {value === null ? '—' : Number(value).toFixed(2)}
+                </span>
+              </div>
+            ))}
+            <p style={{ fontSize: 10, color: 'var(--muted-2)', margin: '2px 0 8px' }}>
+              {merchant?.walletAddress
+                ? `${merchant.walletAddress.slice(0, 8)}…${merchant.walletAddress.slice(-6)}`
+                : '—'}
             </p>
-            <div className="divider" style={{ margin: '8px 0' }} />
+            <div className="divider" style={{ margin: '6px 0' }} />
             <Link href="/ledger" style={{ fontSize: 11, color: 'var(--amber)' }}>
               View ledger &rarr;
             </Link>

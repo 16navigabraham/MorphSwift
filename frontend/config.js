@@ -31,7 +31,6 @@ export const CONFIG = {
     checkoutReference: 'morphswift-checkout-reference',
     activeMerchant: 'morphswift-active-merchant',
     checkoutData: 'morphswift-checkout',
-    payerReceipt: 'morphswift-payer-receipt',
   },
 
   checkout: {
@@ -48,8 +47,8 @@ export const CONFIG = {
   contract: {
     gatewayAddress: '0x91F8763B119CA7EC990ECCD0Db6A19ca13cAfDDa',
     gatewayAbiUrl: '/assets/abi/MorphSwiftGateway.abi.json',
-    // USDC token address on Morph Hoodi — update if the testnet address changes
-    usdcAddress: '0x9E12AD42c4E4d2acFBADE01a96446e48e6764B98',
+    usdcAddress: '0x7433b41C6c5e1d58D4Da99483609520255ab661B',
+    usdtAddress: '0xb646c743B4BA47ac03Bee360BB2484Fb55Db8d7e',
     chainId: 2910,
     nativeCurrency: 'ETH',
     chainName: 'Morph Hoodi',

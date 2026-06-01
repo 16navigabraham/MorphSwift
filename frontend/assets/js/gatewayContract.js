@@ -183,6 +183,46 @@ export function pollCheckoutPaid(onChainCheckoutId, handlers = {}) {
   return () => { stopped = true; };
 }
 
+// ─── on-chain token balances ─────────────────────────────────────────────────
+
+const ERC20_ABI = [
+  'function balanceOf(address owner) view returns (uint256)',
+  'function decimals() view returns (uint8)',
+];
+
+let _rpcProvider = null;
+function getRpcProvider() {
+  if (!_rpcProvider) {
+    _rpcProvider = new ethers.JsonRpcProvider(CONFIG.contract.rpcUrls[0]);
+  }
+  return _rpcProvider;
+}
+
+/**
+ * Fetch real on-chain USDC and USDT balances for a wallet address.
+ * Uses the public Morph Hoodi RPC — no wallet connection required.
+ * Returns { usdc, usdt } as human-readable numbers (already divided by decimals).
+ */
+export async function fetchOnChainBalances(walletAddress) {
+  if (!walletAddress) return { usdc: 0, usdt: 0 };
+  const provider = getRpcProvider();
+
+  const usdc = new ethers.Contract(CONFIG.contract.usdcAddress, ERC20_ABI, provider);
+  const usdt = new ethers.Contract(CONFIG.contract.usdtAddress, ERC20_ABI, provider);
+
+  const [usdcRaw, usdcDec, usdtRaw, usdtDec] = await Promise.all([
+    usdc.balanceOf(walletAddress),
+    usdc.decimals(),
+    usdt.balanceOf(walletAddress),
+    usdt.decimals(),
+  ]);
+
+  return {
+    usdc: Number(ethers.formatUnits(usdcRaw, usdcDec)),
+    usdt: Number(ethers.formatUnits(usdtRaw, usdtDec)),
+  };
+}
+
 // ─── QR payment URI ──────────────────────────────────────────────────────────
 
 /**

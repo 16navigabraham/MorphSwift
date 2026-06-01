@@ -7,6 +7,8 @@ import { createWithdrawal, estimateNet } from '../../assets/js/withdraw.js';
 import { computeStats, fetchLedger, loadLocalHistory, mergeTransactions, downloadCsv, mapApiTransaction } from '../../assets/js/ledger.js';
 import { getMerchantId, getSession, loginWithWallet, saveSession } from '../../assets/js/magic.js';
 import { formatFiatSymbol } from '../../assets/js/priceFeeds.js';
+import { fetchOnChainBalances } from '../../assets/js/gatewayContract.js';
+import TokenLogo from '../components/TokenLogo';
 
 function dateKey(iso) {
   const d = new Date(iso);
@@ -47,6 +49,7 @@ export default function LedgerPage() {
   const [destination, setDestination] = useState('');
   const [loading, setLoading] = useState(false);
   const [serverOnline, setServerOnline] = useState(true);
+  const [onChainBalance, setOnChainBalance] = useState({ usdc: null, usdt: null });
 
   useEffect(() => {
     const session = getSession();
@@ -63,11 +66,16 @@ export default function LedgerPage() {
           setMerchantId(freshSession.merchant.id);
         })
         .catch(() => {
-          // fallback to cached id if re-auth fails
           setMerchantId(session.merchant.id);
         });
     } else {
       setMerchantId(session.merchant.id);
+    }
+
+    if (walletAddress?.startsWith('0x')) {
+      fetchOnChainBalances(walletAddress)
+        .then(setOnChainBalance)
+        .catch(() => {});
     }
   }, [router]);
 
@@ -173,8 +181,25 @@ export default function LedgerPage() {
             <div className="metrics-grid">
               <div className="metric"><div><div className="metric-label">Today</div><div className="metric-value">{todayRev.toFixed(2)} USDC</div></div><div className="metric-sub">↑ {todayCount} txn{todayCount === 1 ? '' : 's'}</div></div>
               <div className="metric"><div><div className="metric-label">7 day</div><div className="metric-value">{weekRev.toFixed(2)} USDC</div></div><div className="metric-sub">Rolling total</div></div>
-              <div className="metric"><div><div className="metric-label">Balance</div><div className="metric-value">{balance.toFixed(2)} USDC</div></div><div className="metric-sub">Withdrawable</div></div>
+              <div className="metric"><div><div className="metric-label">Earned</div><div className="metric-value">{balance.toFixed(2)} USDC</div></div><div className="metric-sub">Platform balance</div></div>
             </div>
+
+            <div className="divider" />
+            <p className="section-label" style={{ marginBottom: 8 }}>On-chain wallet</p>
+            {[
+              { token: 'USDC', value: onChainBalance.usdc },
+              { token: 'USDT', value: onChainBalance.usdt },
+            ].map(({ token, value }) => (
+              <div key={token} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <TokenLogo token={token} size={18} />
+                  <span style={{ fontSize: 12, color: 'var(--muted)' }}>{token}</span>
+                </div>
+                <span style={{ fontFamily: 'var(--font-display), system-ui, sans-serif', fontSize: 18, fontWeight: 800, letterSpacing: '-0.05em' }}>
+                  {value === null ? '—' : Number(value).toFixed(2)}
+                </span>
+              </div>
+            ))}
 
             <div className="divider" />
             <div className="mini-chart">
@@ -222,8 +247,11 @@ export default function LedgerPage() {
                             <div className={`tx-icon ${transaction.status}`}>{statusIcon(transaction.status)}</div>
                             <div className="tx-info">
                               <div className="tx-primary">
-                                <span className="tx-amount">${transaction.usdAmount.toFixed(2)}</span>
-                                <span className="tx-token">{transaction.token}</span>
+                                <span className="tx-amount">{transaction.usdAmount.toFixed(2)}</span>
+                                <span className="tx-token" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                                  <TokenLogo token={transaction.token} size={14} />
+                                  {transaction.token}
+                                </span>
                                 <span className="tx-fiat">{fiatSymbol}{Number(transaction.fiatAmount).toLocaleString()}</span>
                               </div>
                               <div className="tx-secondary">
