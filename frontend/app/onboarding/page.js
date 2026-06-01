@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { CONFIG } from '../../config.js';
 import { getSession, loginWithWallet } from '../../assets/js/magic.js';
+import { registerMerchantOnChain } from '../../assets/js/gatewayContract.js';
 import WalletConnect from '../components/WalletConnect';
 
 function initialsFor(name = 'MS') {
@@ -20,6 +21,7 @@ export default function OnboardingPage() {
   const router = useRouter();
   const [sent, setSent] = useState(false);
   const [signedIn, setSignedIn] = useState(null);
+  const [contractStatus, setContractStatus] = useState('');
 
   useEffect(() => {
     setSignedIn(getSession().merchant);
@@ -30,9 +32,21 @@ export default function OnboardingPage() {
       await loginWithWallet(connection.address);
       setSignedIn(getSession().merchant);
       setSent(true);
+
+      // Register merchant on-chain (safe to call if already registered)
+      if (connection.signer) {
+        try {
+          setContractStatus('Registering on Morph Hoodi…');
+          const { alreadyRegistered } = await registerMerchantOnChain(connection.signer);
+          setContractStatus(alreadyRegistered ? 'Already registered on-chain.' : 'Registered on Morph Hoodi.');
+        } catch (err) {
+          setContractStatus(`On-chain registration skipped: ${err.message}`);
+        }
+      }
+
       setTimeout(() => {
         router.push(`/terminal?source=wallet-connect`);
-      }, 700);
+      }, 900);
     } catch (error) {
       alert(error.message || 'Unable to create session');
     }
@@ -67,11 +81,12 @@ export default function OnboardingPage() {
               <p className="help">Use the wallet button in the top bar to sign in.</p>
             </div>
 
-            {sent ? (
-              <p className="footer-note" style={{ color: '#9fffb5' }}>
-                Wallet connected. Routing you to the terminal.
-              </p>
-            ) : null}
+            {sent && (
+              <p className="footer-note" style={{ color: '#9fffb5' }}>Wallet connected. Routing you to the terminal.</p>
+            )}
+            {contractStatus && (
+              <p className="footer-note" style={{ color: 'var(--muted)' }}>{contractStatus}</p>
+            )}
           </article>
 
           <aside className="summary-card">

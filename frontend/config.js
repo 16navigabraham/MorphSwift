@@ -43,7 +43,9 @@ export const CONFIG = {
 
   contract: {
     gatewayAddress: '0x91F8763B119CA7EC990ECCD0Db6A19ca13cAfDDa',
-    gatewayAbiUrl: './assets/abi/MorphSwiftGateway.abi.json',
+    gatewayAbiUrl: '/assets/abi/MorphSwiftGateway.abi.json',
+    // USDC token address on Morph Hoodi — update if the testnet address changes
+    usdcAddress: '0x9E12AD42c4E4d2acFBADE01a96446e48e6764B98',
     chainId: 2910,
     nativeCurrency: 'ETH',
     chainName: 'Morph Hoodi',

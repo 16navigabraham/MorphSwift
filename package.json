@@ -1,4 +1,10 @@
 {
+  "name": "morphswift",
+  "private": true,
+  "scripts": {
+    "build": "npm install --prefix server",
+    "start": "node server/src/index.js"
+  },
   "dependencies": {
     "@heroicons/react": "^2.2.0"
   }

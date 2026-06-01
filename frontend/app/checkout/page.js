@@ -7,6 +7,13 @@ import { createCheckout, confirmCheckout } from '../../assets/js/chainListener.j
 import { buildPaymentUri, shortAddress } from '../../assets/js/qrPayload.js';
 import { getSession } from '../../assets/js/magic.js';
 import { saveLocalTransaction } from '../../assets/js/ledger.js';
+import {
+  createCheckoutOnChain,
+  pollCheckoutPaid,
+  buildPayCheckoutUri,
+} from '../../assets/js/gatewayContract.js';
+import { getSigner, hasInjectedProvider } from '../../assets/js/wallet.js';
+import WalletConnect from '../components/WalletConnect';
 
 function readChargeContext() {
   const amount = sessionStorage.getItem(CONFIG.storage.chargeAmount) || '0';
@@ -18,7 +25,7 @@ function readChargeContext() {
 
 function randomHash() {
   const bytes = crypto.getRandomValues(new Uint8Array(16));
-  return `0x${Array.from(bytes, (value) => value.toString(16).padStart(2, '0')).join('')}`;
+  return `0x${Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('')}`;
 }
 
 function ensureQrScript() {
@@ -40,14 +47,11 @@ function ensureQrScript() {
   });
 }
 
-import WalletConnect from '../components/WalletConnect';
-
 export default function CheckoutPage() {
   const router = useRouter();
   const qrRef = useRef(null);
-  const checkoutRef = useRef(null);
+  const stopPollRef = useRef(null);
   const timerRef = useRef(null);
-  const confirmRef = useRef(null);
   const [status, setStatus] = useState('Preparing checkout…');
   const [remaining, setRemaining] = useState(CONFIG.checkout.expirySeconds);
   const [merchant, setMerchant] = useState(null);
@@ -55,29 +59,37 @@ export default function CheckoutPage() {
   const [checkout, setCheckout] = useState(null);
   const [overlayVisible, setOverlayVisible] = useState(false);
   const [confirmedTx, setConfirmedTx] = useState(null);
+  const [onChainId, setOnChainId] = useState(null);
+  const [contractPhase, setContractPhase] = useState('');
 
   const amountLabel = useMemo(() => {
     if (!context) return '0';
-    const symbol = context.currency === 'PHP' ? '₱' : `${context.currency} `;
+    const symbol = CONFIG.currencySymbols[context.currency] ?? `${context.currency} `;
     return `${symbol}${Number(context.amount).toLocaleString()}`;
   }, [context]);
 
   useEffect(() => {
     const current = readChargeContext();
-    if (!current.merchant?.id) {
-      router.replace('/onboarding');
-      return;
-    }
-
+    if (!current.merchant?.id) { router.replace('/onboarding'); return; }
     setMerchant(current.merchant);
     setContext(current);
   }, [router]);
 
+  // Countdown timer
+  useEffect(() => {
+    timerRef.current = setInterval(() => {
+      setRemaining((v) => Math.max(0, v - 1));
+    }, 1000);
+    return () => clearInterval(timerRef.current);
+  }, []);
+
+  // Main checkout flow
   useEffect(() => {
     if (!context?.merchant?.id) return;
     let alive = true;
 
     (async () => {
+      // 1. Create checkout on the server
       const created = await createCheckout({
         merchantId: context.merchant.id,
         amountFiat: Number(context.amount),
@@ -87,20 +99,42 @@ export default function CheckoutPage() {
       });
       if (!alive) return;
       setCheckout(created);
-      checkoutRef.current = created;
       setRemaining(CONFIG.checkout.expirySeconds);
-      setStatus('Listening for transaction…');
 
+      // 2. Attempt on-chain checkout creation if wallet is connected
+      let resolvedOnChainId = null;
+      if (hasInjectedProvider()) {
+        try {
+          setContractPhase('Creating on-chain checkout…');
+          const signer = await getSigner();
+          if (signer) {
+            const { onChainCheckoutId } = await createCheckoutOnChain(signer, {
+              serverCheckoutId: created.id,
+              stablecoinAmount: created.stablecoinAmount,
+            });
+            resolvedOnChainId = onChainCheckoutId;
+            setOnChainId(onChainCheckoutId);
+            setContractPhase('On-chain checkout registered.');
+          }
+        } catch (err) {
+          setContractPhase(`On-chain skipped: ${err.message}`);
+        }
+      }
+
+      // 3. Render QR — prefer payCheckout URI if on-chain id available
       const qrReady = await ensureQrScript();
       if (alive && qrReady && qrRef.current) {
         qrRef.current.innerHTML = '';
+        const qrText = resolvedOnChainId
+          ? buildPayCheckoutUri(resolvedOnChainId)
+          : buildPaymentUri({
+              address: created.payoutWallet || created.merchantId,
+              amount: created.stablecoinAmount,
+              token: created.token,
+              network: created.network || CONFIG.settlementNetwork,
+            });
         new window.QRCode(qrRef.current, {
-          text: buildPaymentUri({
-            address: created.payoutWallet || created.merchantId,
-            amount: created.stablecoinAmount,
-            token: created.token,
-            network: created.network || CONFIG.settlementNetwork,
-          }),
+          text: qrText,
           width: 160,
           height: 160,
           colorDark: '#000000',
@@ -109,66 +143,76 @@ export default function CheckoutPage() {
         });
       }
 
-      confirmRef.current = setTimeout(async () => {
-        try {
-          const receipt = await confirmCheckout(created.id, randomHash());
-          const tx = receipt.transaction;
-          setConfirmedTx(tx);
-          saveLocalTransaction({
-            id: tx.id,
-            timestamp: tx.confirmedAt,
-            usdAmount: Number(tx.stablecoinAmount ?? tx.amountFiat ?? 0),
-            fiatAmount: Number(tx.amountFiat ?? 0),
-            fiatCurrency: tx.currency ?? 'USD',
-            token: tx.token ?? 'USDC',
-            network: CONFIG.settlementNetwork,
-            status: 'confirmed',
-            hash: tx.txHash,
-          });
-          sessionStorage.setItem('morphswift-payer-receipt', JSON.stringify({
-            status: 'sent',
-            amount: Number(tx.stablecoinAmount ?? 0).toFixed(2),
-            usdAmount: Number(tx.stablecoinAmount ?? 0).toFixed(2),
-            token: tx.token ?? 'USDC',
-            network: CONFIG.settlementNetwork,
-            merchant: receipt.merchant?.displayName ?? created.merchantName ?? 'Merchant',
-            merchantName: receipt.merchant?.displayName ?? created.merchantName ?? 'Merchant',
-            fiatAmount: Number(tx.amountFiat ?? 0),
-            fiatCurrency: tx.currency ?? 'USD',
-            txHash: tx.txHash,
-            narration: created.reference ?? '',
-            timestamp: tx.confirmedAt,
-          }));
-          setOverlayVisible(true);
-          setStatus(`Confirmed on ${CONFIG.settlementNetwork}.`);
-        } catch (error) {
-          setStatus(error.message || 'Payment failed');
-        }
+      // 4a. If on-chain — poll for real CheckoutPaid event
+      if (resolvedOnChainId) {
+        setStatus('Waiting for on-chain payment…');
+        stopPollRef.current = pollCheckoutPaid(resolvedOnChainId, {
+          intervalMs: CONFIG.checkout.pollIntervalMs,
+          timeoutMs: CONFIG.checkout.expirySeconds * 1000,
+          onPaid: async ({ txHash }) => {
+            if (!alive) return;
+            await handleConfirmed(created, txHash ?? randomHash());
+          },
+          onError: (err) => {
+            if (alive) setStatus(err.message || 'Payment polling failed');
+          },
+        });
+        return;
+      }
+
+      // 4b. Fallback — simulate confirmation after 4 s (no wallet / no contract)
+      setStatus('Listening for transaction…');
+      setTimeout(async () => {
+        if (!alive) return;
+        await handleConfirmed(created, randomHash()).catch((err) => {
+          setStatus(err.message || 'Payment failed');
+        });
       }, 4000);
-    })();
+    })().catch((err) => {
+      if (alive) setStatus(err.message || 'Unable to create checkout');
+    });
 
     return () => {
       alive = false;
-      clearInterval(timerRef.current);
-      clearTimeout(confirmRef.current);
+      stopPollRef.current?.();
     };
   }, [context]);
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setRemaining((value) => Math.max(0, value - 1));
-    }, 1000);
-    timerRef.current = timer;
-    return () => clearInterval(timer);
-  }, []);
+  async function handleConfirmed(created, txHash) {
+    const receipt = await confirmCheckout(created.id, txHash);
+    const tx = receipt.transaction;
 
-  function newPayment() {
-    router.push('/terminal');
-  }
+    saveLocalTransaction({
+      id: tx.id,
+      timestamp: tx.confirmedAt,
+      usdAmount: Number(tx.stablecoinAmount ?? tx.amountFiat ?? 0),
+      fiatAmount: Number(tx.amountFiat ?? 0),
+      fiatCurrency: tx.currency ?? 'USD',
+      token: tx.token ?? 'USDC',
+      network: CONFIG.settlementNetwork,
+      status: 'confirmed',
+      hash: tx.txHash,
+    });
 
-  function copyQr() {
-    if (!checkout?.qrPayload) return;
-    navigator.clipboard?.writeText(checkout.qrPayload).catch(() => {});
+    sessionStorage.setItem('morphswift-payer-receipt', JSON.stringify({
+      status: 'sent',
+      amount: Number(tx.stablecoinAmount ?? 0).toFixed(2),
+      usdAmount: Number(tx.stablecoinAmount ?? 0).toFixed(2),
+      token: tx.token ?? 'USDC',
+      network: CONFIG.settlementNetwork,
+      merchant: receipt.merchant?.displayName ?? created.merchantName ?? 'Merchant',
+      merchantName: receipt.merchant?.displayName ?? created.merchantName ?? 'Merchant',
+      fiatAmount: Number(tx.amountFiat ?? 0),
+      fiatCurrency: tx.currency ?? 'USD',
+      txHash: tx.txHash,
+      narration: created.reference ?? '',
+      timestamp: tx.confirmedAt,
+    }));
+
+    setConfirmedTx(tx);
+    setOverlayVisible(true);
+    setStatus(`Confirmed on ${CONFIG.settlementNetwork}.`);
+    clearInterval(timerRef.current);
   }
 
   const timerText = remaining > 0
@@ -181,9 +225,9 @@ export default function CheckoutPage() {
         <a className="button ghost" href="/terminal">← Back</a>
         <div className="brand">
           <span className="brand-mark">M</span>
-          <span>MorphSwift Checkout</span>
+          <span>Checkout</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span className="badge">{timerText}</span>
           <WalletConnect />
         </div>
@@ -195,57 +239,66 @@ export default function CheckoutPage() {
             <div className="amount-strip" style={{ padding: 0, border: 0, marginBottom: 12 }}>
               <div>
                 <div className="section-label">Amount due</div>
-                <div className="amount-strip-value">{amountLabel}</div>
+                <div className="amount-strip-value" style={{ fontSize: 'clamp(20px, 5vw, 34px)', letterSpacing: '-0.05em', fontFamily: 'var(--font-display), system-ui, sans-serif', fontWeight: 800 }}>
+                  {amountLabel}
+                </div>
                 <div className="help">{Number(context?.usd || 0).toFixed(2)} USDC</div>
               </div>
-              <div className="pill"><span className="badge-icon">●</span>{CONFIG.settlementNetwork}</div>
+              <div className="pill" style={{ fontSize: 11 }}>
+                <span className="badge-icon">●</span>{CONFIG.settlementNetwork}
+              </div>
             </div>
 
-            <div className="qr-shell" style={{ width: 'fit-content', margin: '22px auto 12px' }}>
+            <div className="qr-shell" style={{ width: 'fit-content', margin: '18px auto 10px' }}>
               <div className="scan-ring" />
               <div className="qr-box" ref={qrRef} />
             </div>
 
-            <div className="wallet-row" style={{ marginTop: 14 }}>
+            {onChainId && (
+              <p style={{ textAlign: 'center', fontSize: 10, color: 'var(--amber)', marginBottom: 8 }}>
+                On-chain checkout active — scan to pay via gateway
+              </p>
+            )}
+
+            <div className="wallet-row" style={{ marginTop: 12 }}>
               <div>
                 <div className="section-label">Recipient</div>
-                <div className="receipt-value" style={{ fontSize: 20 }}>{shortAddress(context?.merchant?.payoutWallet || checkout?.payoutWallet || checkout?.merchantId || merchant?.id || '')}</div>
+                <div style={{ fontSize: 14, fontWeight: 700, letterSpacing: '-0.03em' }}>
+                  {shortAddress(context?.merchant?.payoutWallet || checkout?.payoutWallet || merchant?.id || '')}
+                </div>
               </div>
-              <button className="button" onClick={copyQr}>Copy QR</button>
+              <button className="button" style={{ fontSize: 12 }}
+                onClick={() => navigator.clipboard?.writeText(checkout?.qrPayload ?? '').catch(() => {})}>
+                Copy QR
+              </button>
             </div>
 
             <div className="divider" />
-            <p className="hero-subtitle">{status}</p>
+            <p className="hero-subtitle" style={{ fontSize: 12 }}>{status}</p>
+            {contractPhase && (
+              <p style={{ fontSize: 11, color: 'var(--muted)', marginTop: 4 }}>{contractPhase}</p>
+            )}
           </article>
 
           <aside className="summary-card">
             <p className="section-label">Settlement summary</p>
-            <div className="metrics-grid">
-              <div className="metric">
-                <div>
-                  <div className="metric-label">Token</div>
-                  <div className="metric-value">{checkout?.token || 'USDC'}</div>
+            <div style={{ display: 'grid', gap: 8 }}>
+              {[
+                { label: 'Token', value: checkout?.token || 'USDC' },
+                { label: 'Network', value: CONFIG.settlementNetwork },
+                { label: 'Merchant', value: context?.merchant?.displayName || merchant?.displayName || 'Merchant' },
+              ].map(({ label, value }) => (
+                <div key={label} className="metric">
+                  <div className="metric-label">{label}</div>
+                  <div className="metric-value" style={{ fontSize: 16 }}>{value}</div>
                 </div>
-              </div>
-              <div className="metric">
-                <div>
-                  <div className="metric-label">Network</div>
-                  <div className="metric-value">{CONFIG.settlementNetwork}</div>
-                </div>
-              </div>
-              <div className="metric">
-                <div>
-                  <div className="metric-label">Merchant</div>
-                  <div className="metric-value">{context?.merchant?.displayName || merchant?.displayName || 'Merchant'}</div>
-                </div>
-              </div>
+              ))}
             </div>
-
             <div className="button-row" style={{ marginTop: 14 }}>
               <button className="button primary" onClick={() => setOverlayVisible(true)} disabled={!confirmedTx}>
                 View receipt
               </button>
-              <button className="button" onClick={newPayment}>New payment</button>
+              <button className="button" onClick={() => router.push('/terminal')}>New payment</button>
             </div>
           </aside>
         </div>
@@ -254,24 +307,24 @@ export default function CheckoutPage() {
       <div className={`overlay ${overlayVisible ? 'visible' : ''}`}>
         <div className="overlay-card">
           <p className="section-label">Payment confirmed</p>
-          <h2 className="hero-title" style={{ fontSize: 'clamp(26px, 5vw, 40px)' }}>Settlement complete.</h2>
+          <h2 className="hero-title" style={{ fontSize: 'clamp(22px, 5vw, 36px)' }}>Settlement complete.</h2>
           <p className="hero-subtitle">
             Confirmed on {CONFIG.settlementNetwork} for {context?.merchant?.displayName || merchant?.displayName || 'the merchant'}.
           </p>
-          <div className="summary-card" style={{ marginTop: 14 }}>
+          <div className="summary-card" style={{ marginTop: 12 }}>
             <div className="receipt-row">
-              <span className="muted">Amount</span>
+              <span className="muted" style={{ fontSize: 12 }}>Amount</span>
               <strong>{Number(confirmedTx?.stablecoinAmount || context?.usd || 0).toFixed(2)} USDC</strong>
             </div>
-            <div className="receipt-row">
-              <span className="muted">Tx hash</span>
-              <strong>{confirmedTx?.txHash || '—'}</strong>
+            <div className="receipt-row" style={{ marginTop: 8 }}>
+              <span className="muted" style={{ fontSize: 12 }}>Tx hash</span>
+              <strong style={{ fontSize: 11, wordBreak: 'break-all' }}>{confirmedTx?.txHash || '—'}</strong>
             </div>
           </div>
           <div className="button-row" style={{ marginTop: 14 }}>
-            <a className="button primary" href="/sender">View customer receipt</a>
+            <a className="button primary" href="/sender">View receipt</a>
             <a className="button" href="/ledger">Open ledger</a>
-            <button className="button" onClick={newPayment}>Close</button>
+            <button className="button" onClick={() => router.push('/terminal')}>Close</button>
           </div>
         </div>
       </div>

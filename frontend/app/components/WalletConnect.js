@@ -27,13 +27,12 @@ export default function WalletConnect({ onConnected, mode = 'display' } = {}) {
       setAddr(res.address);
       const ok = await ensureCorrectNetwork(CONFIG.contract.chainId);
       setStatus(ok ? 'Connected' : `Switch to chain ${CONFIG.contract.chainId}`);
-      if (!ok) {
-        return res;
-      }
+      if (!ok) return res;
       const stillOk = await isCorrectNetwork(CONFIG.contract.chainId);
       setStatus(stillOk ? 'Connected' : `Wrong network (expect ${CONFIG.contract.chainId})`);
       if (typeof onConnected === 'function') {
-        await onConnected(res);
+        // pass signer so callers can sign contract transactions
+        await onConnected({ ...res, signer: res.signer });
       }
       return res;
     } catch (err) {
