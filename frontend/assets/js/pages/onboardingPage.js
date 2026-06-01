@@ -1,4 +1,5 @@
-import { loginWithEmail } from '../magic.js';
+import { loginWithWallet } from '../magic.js';
+import { CONFIG } from '../../config.js';
 
 function setLoading(button, label) {
   if (!button) return;
@@ -13,58 +14,40 @@ function clearLoading(button) {
   button.textContent = button.dataset.originalLabel ?? button.textContent;
 }
 
-async function goToTerminal(email, source) {
+async function goToTerminal(walletAddress) {
   const status = document.getElementById('magic-sent');
-  const emailForm = document.getElementById('email-form');
-  const sentEmail = document.getElementById('sent-email');
-  const googleButton = document.querySelector('.btn');
-  const sendButton = document.querySelector('.btn-send');
+  const walletChip = document.getElementById('wallet-address');
 
   try {
-    await loginWithEmail(email);
-    if (emailForm) emailForm.style.display = 'none';
+    await loginWithWallet(walletAddress);
     if (status) status.classList.add('visible');
-    if (sentEmail) sentEmail.textContent = email;
+    if (walletChip) walletChip.textContent = walletAddress;
     setTimeout(() => {
-      window.location.href = 'terminal.html?source=' + encodeURIComponent(source);
+      window.location.href = 'terminal.html?source=wallet-connect';
     }, 800);
   } catch (error) {
     console.error(error);
-    clearLoading(googleButton);
-    clearLoading(sendButton);
     alert(error.message || 'Unable to create session');
   }
 }
 
-async function handleGoogle() {
-  const emailInput = document.getElementById('email-input');
+async function handleWalletConnect() {
   const button = document.querySelector('.btn');
-  const email = (emailInput?.value || 'merchant@morphswift.app').trim() || 'merchant@morphswift.app';
-  setLoading(button, 'Connecting to Google…');
-  await goToTerminal(email, 'google');
-}
-
-async function handleMagicLink() {
-  const input = document.getElementById('email-input');
-  const button = document.querySelector('.btn-send');
-  const email = input?.value?.trim() || '';
-
-  if (!email || !email.includes('@')) {
-    if (input) {
-      input.style.borderColor = 'rgba(220,50,50,0.5)';
-      input.focus();
-      setTimeout(() => {
-        input.style.borderColor = '';
-      }, 2000);
-    }
+  setLoading(button, 'Connecting wallet…');
+  const walletAddress = window.ethereum ? (await window.ethereum.request({ method: 'eth_requestAccounts' }))?.[0] : '';
+  if (!walletAddress) {
+    clearLoading(button);
+    alert('Connect a wallet first.');
     return;
   }
-
-  setLoading(button, 'Sending…');
-  await goToTerminal(email, 'magic-link');
+  await goToTerminal(walletAddress);
 }
 
 export function initOnboardingPage() {
-  window.handleGoogle = handleGoogle;
-  window.handleMagicLink = handleMagicLink;
+  window.handleWalletConnect = handleWalletConnect;
+
+  const statusItems = document.querySelectorAll('.status-item');
+  if (statusItems[0]) {
+    statusItems[0].lastChild.textContent = ` ${CONFIG.settlementNetwork}`;
+  }
 }

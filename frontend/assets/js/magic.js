@@ -1,15 +1,10 @@
-/**
- * Merchant auth — API session + local persistence.
- * Wire Magic SDK later via CONFIG.magicPublishableKey when available.
- */
-
 import { apiUrl, CONFIG } from '../../config.js';
 
-export async function createSession({ email, displayName, provider = 'magic-link' }) {
+export async function createSession({ walletAddress, displayName, provider = 'wallet-connect' }) {
   const res = await fetch(apiUrl('auth/session'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, displayName, provider }),
+    body: JSON.stringify({ walletAddress, displayName, provider }),
   });
 
   if (!res.ok) {
@@ -54,10 +49,8 @@ export function getMerchantId() {
   return getSession().merchant?.id ?? null;
 }
 
-/**
- * Demo / offline login used by onboarding.html until Magic is configured.
- */
-export async function loginWithEmail(email) {
-  const displayName = email.split('@')[0];
-  return createSession({ email, displayName, provider: 'magic-link' });
+export async function loginWithWallet(walletAddress) {
+  const short = String(walletAddress || '').slice(0, 8);
+  return createSession({ walletAddress, displayName: short, provider: 'wallet-connect' });
 }
+

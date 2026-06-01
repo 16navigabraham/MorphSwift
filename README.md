@@ -54,3 +54,16 @@ Open `http://localhost:3000/onboarding.html`. In development, `frontend/config.j
 ## License
 
 See [LICENSE](LICENSE).
+
+## Frontend (Next.js)
+
+There is an optional Next.js app scaffold under `frontend/` to run a React-based frontend that mirrors the static pages. To run it:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+It serves the same UI routes at `/onboarding`, `/terminal`, `/checkout`, `/ledger`, and `/sender` and reuses the static assets in `frontend/public`.
+

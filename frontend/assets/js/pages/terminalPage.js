@@ -23,7 +23,7 @@ function updateMerchantChip() {
     return;
   }
 
-  const name = merchant.displayName || merchant.email || 'Merchant';
+  const name = merchant.displayName || merchant.walletAddress || merchant.email || 'Merchant';
   const initials = name
     .split(/\s+/)
     .map((part) => part[0])

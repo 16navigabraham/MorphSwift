@@ -1,0 +1,15 @@
+{
+  "name": "MorphSwift POS",
+  "short_name": "MorphSwift",
+  "start_url": "/onboarding",
+  "display": "standalone",
+  "background_color": "#0e0e11",
+  "theme_color": "#1be500",
+  "icons": [
+    {
+      "src": "/assets/icons/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

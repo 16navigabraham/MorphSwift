@@ -24,7 +24,7 @@ function qrText(checkout) {
     address: checkout.payoutWallet || checkout.merchantId,
     amount: checkout.stablecoinAmount,
     token: checkout.token,
-    network: checkout.network || 'Morph',
+    network: checkout.network || CONFIG.settlementNetwork,
   });
 }
 
@@ -91,7 +91,7 @@ async function finalizeCheckout(checkout) {
     fiatAmount: Number(tx.amountFiat ?? 0),
     fiatCurrency: tx.currency ?? 'USD',
     token: tx.token ?? 'USDC',
-    network: 'Morph',
+    network: CONFIG.settlementNetwork,
     status: 'confirmed',
     hash: tx.txHash,
   });
@@ -114,9 +114,9 @@ async function finalizeCheckout(checkout) {
   document.getElementById('success-overlay')?.classList.add('visible');
   setText('s-amount', `${Number(tx.stablecoinAmount ?? 0).toFixed(2)} ${tx.token ?? 'USDC'}`);
   setText('s-token', tx.token ?? 'USDC');
-  setText('s-network', 'Morph');
+  setText('s-network', CONFIG.settlementNetwork);
   const successSub = document.querySelector('.success-sub');
-  if (successSub) successSub.textContent = `Confirmed on Morph. Settlement completed for ${receipt.merchant?.displayName ?? checkout.merchantName ?? 'the merchant'}.`;
+  if (successSub) successSub.textContent = `Confirmed on ${CONFIG.settlementNetwork}. Settlement completed for ${receipt.merchant?.displayName ?? checkout.merchantName ?? 'the merchant'}.`;
   clearInterval(state.timerId);
 }
 
@@ -131,7 +131,7 @@ async function loadCheckout() {
   setText('usd-equiv', `${Number(usd).toFixed(2)} USDC`);
   setText('s-amount', `${Number(usd).toFixed(2)} USDC`);
   setText('s-token', 'USDC');
-  setText('s-network', 'Morph');
+  setText('s-network', CONFIG.settlementNetwork);
   setText('wallet-addr', shortAddress(merchant.payoutWallet || merchant.id || 'merchant'));
   document.getElementById('wallet-addr')?.setAttribute('data-full', merchant.payoutWallet || merchant.id || 'merchant');
 

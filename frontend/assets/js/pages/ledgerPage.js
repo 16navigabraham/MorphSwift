@@ -1,6 +1,7 @@
 import { createWithdrawal, estimateNet } from '../withdraw.js';
 import { computeStats, fetchLedger, loadLocalHistory, mergeTransactions, downloadCsv, mapApiTransaction } from '../ledger.js';
 import { getMerchantId } from '../magic.js';
+import { CONFIG } from '../../config.js';
 
 const state = {
   filter: 'all',
@@ -130,7 +131,7 @@ async function loadLedger() {
     fiatAmount: Number(entry.fiatAmount ?? 0),
     fiatCurrency: entry.fiatCurrency ?? 'USD',
     token: entry.token ?? 'USDC',
-    network: entry.network ?? 'Morph',
+    network: entry.network ?? CONFIG.settlementNetwork,
     status: entry.status ?? 'confirmed',
     hash: entry.hash ?? entry.txHash ?? '',
   }));
@@ -143,9 +144,10 @@ async function loadLedger() {
   setText('today-rev', `$${stats.todayRev.toFixed(2)}`);
   setText('today-count', `↑ ${stats.todayCount} txn${stats.todayCount === 1 ? '' : 's'}`);
   setText('week-rev', `$${stats.weekRev.toFixed(2)}`);
-  setText('balance', `$${Number(apiLedger?.balance ?? stats.balance).toFixed(2)} USDC`);
-  setText('modal-balance', `$${Number(apiLedger?.balance ?? stats.balance).toFixed(2)} USDC`);
-  setText('modal-net', `$${estimateNet(apiLedger?.balance ?? stats.balance).toFixed(2)} USDC`);
+  const nativeCurrency = CONFIG.contract.nativeCurrency || 'ETH';
+  setText('balance', `$${Number(apiLedger?.balance ?? stats.balance).toFixed(2)} ${nativeCurrency}`);
+  setText('modal-balance', `$${Number(apiLedger?.balance ?? stats.balance).toFixed(2)} ${nativeCurrency}`);
+  setText('modal-net', `$${estimateNet(apiLedger?.balance ?? stats.balance).toFixed(2)} ${nativeCurrency}`);
   renderMiniChart(stats.chartTotals, stats.chartLabels);
   renderList();
 }

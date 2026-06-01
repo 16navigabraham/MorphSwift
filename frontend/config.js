@@ -3,12 +3,8 @@
  * Import from page scripts: import { CONFIG } from './config.js';
  */
 
-const isLocalhost =
-  typeof location !== 'undefined' &&
-  (location.hostname === 'localhost' || location.hostname === '127.0.0.1');
-
 export const CONFIG = {
-  apiBaseUrl: isLocalhost ? 'http://localhost:4000/api' : '/api',
+  apiBaseUrl: '/api',
 
   brandName: 'MorphSwift',
 
@@ -39,19 +35,22 @@ export const CONFIG = {
     pollIntervalMs: 2500,
   },
 
-  settlementNetwork: 'Morph',
+  settlementNetwork: 'Morph Hoodi',
   networks: {
-    USDC: 'Morph',
-    USDT: 'Morph',
+    USDC: 'Morph Hoodi',
+    USDT: 'Morph Hoodi',
   },
 
   contract: {
-    gatewayAddress: '',
+    gatewayAddress: '0x91F8763B119CA7EC990ECCD0Db6A19ca13cAfDDa',
     gatewayAbiUrl: './assets/abi/MorphSwiftGateway.abi.json',
+    chainId: 2910,
+    nativeCurrency: 'ETH',
+    chainName: 'Morph Hoodi',
+    rpcUrls: ['https://rpc-hoodi.morphl2.io'],
+    blockExplorerUrls: ['https://explorer-hoodi.morphl2.io'],
   },
 
-  /** Placeholder for Magic Link publishable key (set in deployment) */
-  magicPublishableKey: '',
 };
 
 export function apiUrl(path = '') {

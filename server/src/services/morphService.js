@@ -50,30 +50,36 @@ function getStablecoinAmount(usdAmount, token, settings) {
   return usdAmount / rate;
 }
 
-function createMerchantSessionRecord(state, { email, displayName, provider }) {
-  const cleanEmail = String(email ?? '').trim().toLowerCase();
-  if (!cleanEmail) {
-    throw new HttpError(400, 'email is required');
+function createMerchantSessionRecord(state, { walletAddress, email, displayName, provider }) {
+  const identity = String(walletAddress ?? email ?? '').trim();
+  if (!identity) {
+    throw new HttpError(400, 'walletAddress is required');
   }
 
-  const merchant = state.merchants.find((entry) => entry.email === cleanEmail);
+  const normalizedIdentity = identity.toLowerCase();
+  const merchant = state.merchants.find(
+    (entry) => String(entry.walletAddress ?? entry.email ?? '').toLowerCase() === normalizedIdentity,
+  );
   if (merchant) {
     merchant.lastLoginAt = new Date().toISOString();
     merchant.provider = provider ?? merchant.provider;
     merchant.displayName = displayName?.trim() || merchant.displayName;
-    merchant.payoutWallet = merchant.payoutWallet ?? derivePseudoWallet(cleanEmail);
+    merchant.walletAddress = merchant.walletAddress ?? identity;
+    merchant.email = merchant.email ?? identity;
+    merchant.payoutWallet = merchant.payoutWallet ?? derivePseudoWallet(identity);
     return merchant;
   }
 
   const newMerchant = {
     id: `mrc_${randomUUID()}`,
-    email: cleanEmail,
-    displayName: displayName?.trim() || cleanEmail.split('@')[0],
-    provider: provider ?? 'magic-link',
+    walletAddress: identity,
+    email: identity,
+    displayName: displayName?.trim() || identity.slice(0, 10),
+    provider: provider ?? 'wallet-connect',
     status: 'active',
     balance: 0,
     currency: 'USDC',
-    payoutWallet: derivePseudoWallet(cleanEmail),
+    payoutWallet: derivePseudoWallet(identity),
     createdAt: new Date().toISOString(),
     lastLoginAt: new Date().toISOString(),
   };
@@ -195,7 +201,7 @@ export async function createCheckout(input) {
     const checkout = {
       id: checkoutId,
       merchantId: merchant.id,
-      merchantEmail: merchant.email,
+      merchantWalletAddress: merchant.walletAddress ?? merchant.email,
       merchantName: merchant.displayName,
       payoutWallet: merchant.payoutWallet,
       status: 'pending',
