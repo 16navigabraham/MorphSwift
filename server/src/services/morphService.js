@@ -83,7 +83,11 @@ export async function createAuthSession({ walletAddress, email, displayName, pro
   if (merchant) {
     merchant.lastLoginAt = new Date().toISOString();
     merchant.provider = provider ?? merchant.provider;
-    merchant.displayName = displayName?.trim() || merchant.displayName;
+    // Only update displayName if a real name is provided (not empty, not an address fragment)
+    const newName = displayName?.trim();
+    if (newName && !newName.startsWith('0x')) {
+      merchant.displayName = newName;
+    }
     merchant.walletAddress = merchant.walletAddress ?? identity;
     merchant.email = merchant.email ?? identity;
     // Keep pseudo payout wallet — it provides privacy by not exposing the real wallet address

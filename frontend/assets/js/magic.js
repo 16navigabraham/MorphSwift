@@ -55,8 +55,7 @@ export function getMerchantId() {
   return getSession().merchant?.id ?? null;
 }
 
-export async function loginWithWallet(walletAddress) {
-  const short = String(walletAddress || '').slice(0, 8);
-  return createSession({ walletAddress, displayName: short, provider: 'wallet-connect' });
+export async function loginWithWallet(walletAddress, displayName = '') {
+  return createSession({ walletAddress, displayName: displayName || undefined, provider: 'wallet-connect' });
 }
 
