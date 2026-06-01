@@ -4,13 +4,12 @@ import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'rea
 import { useRouter, useSearchParams } from 'next/navigation';
 import { CONFIG } from '../../config.js';
 import { createCheckout, confirmCheckout, fetchCheckout, patchCheckout } from '../../assets/js/chainListener.js';
-import { buildPaymentUri, shortAddress } from '../../assets/js/qrPayload.js';
+import { shortAddress } from '../../assets/js/qrPayload.js';
 import { getSession, loginWithWallet, saveSession } from '../../assets/js/magic.js';
 import { saveLocalTransaction } from '../../assets/js/ledger.js';
 import {
   createCheckoutOnChain,
   pollCheckoutPaid,
-  buildPayCheckoutUri,
 } from '../../assets/js/gatewayContract.js';
 import { getSigner, hasInjectedProvider } from '../../assets/js/wallet.js';
 import { QRCodeSVG } from 'qrcode.react';
@@ -61,7 +60,7 @@ function CheckoutContent() {
 
   const paymentLink = useMemo(() => {
     if (!checkout?.id || typeof window === 'undefined') return null;
-    return `${window.location.origin}/checkout?id=${checkout.id}`;
+    return `${window.location.origin}/pay?id=${checkout.id}`;
   }, [checkout]);
 
   function copyLink() {
@@ -138,16 +137,9 @@ function CheckoutContent() {
     }
   }
 
-  function setupQr(co, resolvedOnChainId) {
-    const text = resolvedOnChainId
-      ? buildPayCheckoutUri(resolvedOnChainId)
-      : buildPaymentUri({
-          address: co.payoutWallet || co.merchantId,
-          amount: co.stablecoinAmount,
-          token: co.token,
-          network: co.network || CONFIG.settlementNetwork,
-        });
-    setQrText(text);
+  function setupQr(co) {
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    setQrText(`${origin}/pay?id=${co.id}`);
   }
 
   // Recovery path — load existing checkout from URL ?id=
@@ -192,7 +184,7 @@ function CheckoutContent() {
       const resumeOnChainId = co.onChainCheckoutId ?? null;
       if (resumeOnChainId) setOnChainId(resumeOnChainId);
 
-      setupQr(co, resumeOnChainId);
+      setupQr(co);
       await startPollingOrFallback(co, resumeOnChainId);
     })().catch((err) => {
       if (alive) setStatus(err.message || 'Could not load checkout');
@@ -267,7 +259,7 @@ function CheckoutContent() {
         }
       }
 
-      setupQr(created, resolvedOnChainId);
+      setupQr(created);
       if (alive) await startPollingOrFallback(created, resolvedOnChainId);
     })().catch((err) => {
       if (alive) setStatus(err.message || 'Unable to create checkout');
