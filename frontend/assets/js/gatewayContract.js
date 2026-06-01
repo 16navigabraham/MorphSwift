@@ -228,11 +228,6 @@ export function pollCheckoutPaid(onChainCheckoutId, handlers = {}) {
 
 // ─── on-chain token balances ─────────────────────────────────────────────────
 
-const ERC20_ABI = [
-  'function balanceOf(address owner) view returns (uint256)',
-  'function decimals() view returns (uint8)',
-];
-
 let _rpcProvider = null;
 function getRpcProvider() {
   if (!_rpcProvider) {
