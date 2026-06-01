@@ -61,8 +61,8 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 16px 20px;
+  gap: 8px;
+  padding: 10px 14px;
   border-bottom: 1px solid var(--border);
   background: rgba(14, 14, 17, 0.9);
   backdrop-filter: blur(16px);
@@ -71,9 +71,9 @@ button {
 .brand {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   font-family: var(--font-display), system-ui, sans-serif;
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 800;
   letter-spacing: -0.04em;
 }
@@ -105,8 +105,18 @@ button {
 }
 
 .merchant-pill {
-  padding: 6px 12px 6px 8px;
-  font-size: 12px;
+  padding: 5px 10px 5px 6px;
+  font-size: 11px;
+}
+
+.merchant-name-label {
+  display: none;
+}
+
+@media (min-width: 480px) {
+  .merchant-name-label {
+    display: inline;
+  }
 }
 
 .merchant-avatar,
@@ -125,7 +135,7 @@ button {
 .page {
   width: min(100%, 980px);
   margin: 0 auto;
-  padding: 18px 16px 28px;
+  padding: 12px 12px 20px;
 }
 
 .stack {
@@ -159,7 +169,7 @@ button {
 .card,
 .panel,
 .summary-card {
-  padding: 16px;
+  padding: 12px 14px;
 }
 
 .hero-title {
@@ -304,8 +314,8 @@ button {
 }
 
 .key {
-  min-height: 56px;
-  font-size: 18px;
+  min-height: 44px;
+  font-size: 15px;
 }
 
 .key.secondary {
@@ -317,15 +327,20 @@ button {
 }
 
 .display {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
   font-family: var(--font-display), system-ui, sans-serif;
-  font-size: clamp(34px, 10vw, 72px);
+  font-size: clamp(22px, 5.5vw, 40px);
   line-height: 1;
-  letter-spacing: -0.08em;
-  margin: 4px 0 8px;
+  letter-spacing: -0.06em;
+  margin: 6px 0 6px;
+  color: var(--muted);
 }
 
-.display.has-value {
-  color: white;
+.display .has-value,
+.display span.has-value {
+  color: var(--text);
 }
 
 .conversion-card,
@@ -603,5 +618,108 @@ button {
 .card h2 {
   margin: 0 0 10px;
   font-family: var(--font-display), system-ui, sans-serif;
+  letter-spacing: -0.04em;
+}
+
+/* Terminal page */
+.terminal-grid {
+  display: grid;
+  gap: 12px;
+  align-items: start;
+}
+
+@media (min-width: 820px) {
+  .terminal-grid {
+    grid-template-columns: 1fr 260px;
+  }
+}
+
+.terminal-sidebar {
+  display: none;
+  gap: 12px;
+}
+
+@media (min-width: 820px) {
+  .terminal-sidebar {
+    display: grid;
+  }
+}
+
+.display-sym {
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-size: 13px;
+  letter-spacing: -0.02em;
+  opacity: 0.45;
+  line-height: 1;
+}
+
+.preset-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+
+.preset-btn {
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 12px;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.preset-btn:hover {
+  background: rgba(27, 229, 0, 0.1);
+  border-color: rgba(27, 229, 0, 0.28);
+  color: var(--amber);
+}
+
+.preset-clear {
+  color: var(--red);
+  border-color: rgba(226, 75, 74, 0.25);
+}
+
+.preset-clear:hover {
+  background: rgba(226, 75, 74, 0.08);
+  border-color: rgba(226, 75, 74, 0.4);
+  color: var(--red);
+}
+
+/* Compact inline conversion strip (mobile) */
+.conversion-strip {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin: 8px 0 4px;
+}
+
+@media (min-width: 820px) {
+  .conversion-strip {
+    display: none;
+  }
+}
+
+.conv-cell {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  padding: 8px 10px;
+  text-align: center;
+}
+
+.conv-cell-label {
+  font-size: 10px;
+  color: var(--muted);
+  margin-bottom: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.conv-cell-value {
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-size: 14px;
+  font-weight: 700;
   letter-spacing: -0.04em;
 }
