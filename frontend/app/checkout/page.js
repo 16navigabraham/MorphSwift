@@ -13,6 +13,7 @@ import {
   buildPayCheckoutUri,
 } from '../../assets/js/gatewayContract.js';
 import { getSigner, hasInjectedProvider } from '../../assets/js/wallet.js';
+import { QRCodeSVG } from 'qrcode.react';
 import WalletConnect from '../components/WalletConnect';
 import TokenLogo from '../components/TokenLogo';
 
@@ -29,44 +30,11 @@ function randomHash() {
   return `0x${Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('')}`;
 }
 
-function ensureQrScript() {
-  if (typeof window === 'undefined') return Promise.resolve(false);
-  if (window.QRCode) return Promise.resolve(true);
-  return new Promise((resolve) => {
-    const existing = document.querySelector('script[data-qrcode="true"]');
-    if (existing) {
-      existing.addEventListener('load', () => resolve(true), { once: true });
-      existing.addEventListener('error', () => resolve(false), { once: true });
-      return;
-    }
-    const script = document.createElement('script');
-    script.dataset.qrcode = 'true';
-    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
-    script.onload = () => resolve(true);
-    script.onerror = () => resolve(false);
-    document.head.appendChild(script);
-  });
-}
-
-function renderQr(container, text) {
-  if (!container || !window.QRCode) return;
-  container.innerHTML = '';
-  new window.QRCode(container, {
-    text,
-    width: 160,
-    height: 160,
-    colorDark: '#000000',
-    colorLight: '#ffffff',
-    correctLevel: window.QRCode.CorrectLevel.H,
-  });
-}
-
 function CheckoutContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const recoveryId = searchParams.get('id');
 
-  const qrRef = useRef(null);
   const stopPollRef = useRef(null);
   const timerRef = useRef(null);
 
@@ -81,6 +49,8 @@ function CheckoutContent() {
   const [contractPhase, setContractPhase] = useState('');
   const [copied, setCopied] = useState(false);
   const [confirming, setConfirming] = useState(false);
+  const [confirmPrompt, setConfirmPrompt] = useState(false);
+  const [qrText, setQrText] = useState('');
   const checkoutRef = useRef(null);
 
   const amountLabel = useMemo(() => {
@@ -168,10 +138,8 @@ function CheckoutContent() {
     }
   }
 
-  async function setupQr(co, resolvedOnChainId) {
-    const qrReady = await ensureQrScript();
-    if (!qrReady || !qrRef.current) return;
-    const qrText = resolvedOnChainId
+  function setupQr(co, resolvedOnChainId) {
+    const text = resolvedOnChainId
       ? buildPayCheckoutUri(resolvedOnChainId)
       : buildPaymentUri({
           address: co.payoutWallet || co.merchantId,
@@ -179,7 +147,7 @@ function CheckoutContent() {
           token: co.token,
           network: co.network || CONFIG.settlementNetwork,
         });
-    renderQr(qrRef.current, qrText);
+    setQrText(text);
   }
 
   // Recovery path — load existing checkout from URL ?id=
@@ -224,7 +192,7 @@ function CheckoutContent() {
       const resumeOnChainId = co.onChainCheckoutId ?? null;
       if (resumeOnChainId) setOnChainId(resumeOnChainId);
 
-      await setupQr(co, resumeOnChainId);
+      setupQr(co, resumeOnChainId);
       await startPollingOrFallback(co, resumeOnChainId);
     })().catch((err) => {
       if (alive) setStatus(err.message || 'Could not load checkout');
@@ -299,7 +267,7 @@ function CheckoutContent() {
         }
       }
 
-      await setupQr(created, resolvedOnChainId);
+      setupQr(created, resolvedOnChainId);
       if (alive) await startPollingOrFallback(created, resolvedOnChainId);
     })().catch((err) => {
       if (alive) setStatus(err.message || 'Unable to create checkout');
@@ -351,7 +319,21 @@ function CheckoutContent() {
 
             <div className="qr-shell" style={{ width: 'fit-content', margin: '16px auto 10px' }}>
               <div className="scan-ring" />
-              <div className="qr-box" ref={qrRef} />
+              <div className="qr-box">
+                {qrText ? (
+                  <QRCodeSVG
+                    value={qrText}
+                    size={160}
+                    bgColor="#ffffff"
+                    fgColor="#000000"
+                    level="H"
+                  />
+                ) : (
+                  <div style={{ width: 160, height: 160, display: 'grid', placeItems: 'center', color: '#aaa', fontSize: 12 }}>
+                    Generating…
+                  </div>
+                )}
+              </div>
             </div>
 
             {onChainId && (
@@ -389,7 +371,11 @@ function CheckoutContent() {
               <div>
                 <div className="section-label">Recipient</div>
                 <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: '-0.03em' }}>
-                  {shortAddress(context?.merchant?.payoutWallet || checkout?.payoutWallet || merchant?.id || '')}
+                  {shortAddress(
+                    context?.merchant?.payoutWallet ||
+                    checkout?.payoutWallet ||
+                    merchant?.payoutWallet || ''
+                  )}
                 </div>
               </div>
               <div style={{ textAlign: 'right' }}>
@@ -406,25 +392,50 @@ function CheckoutContent() {
               <p style={{ fontSize: 11, color: 'var(--muted)', marginTop: 4 }}>{contractPhase}</p>
             )}
 
-            {/* Manual confirm — shown when no on-chain polling is active */}
+            {/* Manual confirm — two-step to prevent accidental taps */}
             {!onChainId && checkout && !confirmedTx && (
-              <button
-                className="button primary"
-                style={{ width: '100%', marginTop: 10, fontSize: 13 }}
-                disabled={confirming}
-                onClick={async () => {
-                  setConfirming(true);
-                  try {
-                    await handleConfirmed(checkoutRef.current ?? checkout, randomHash());
-                  } catch (err) {
-                    setStatus(err.message || 'Confirmation failed');
-                  } finally {
-                    setConfirming(false);
-                  }
-                }}
-              >
-                {confirming ? 'Confirming…' : 'Mark as received'}
-              </button>
+              !confirmPrompt ? (
+                <button
+                  className="button"
+                  style={{ width: '100%', marginTop: 10, fontSize: 13 }}
+                  onClick={() => setConfirmPrompt(true)}
+                >
+                  Mark as received
+                </button>
+              ) : (
+                <div style={{ marginTop: 10, background: 'rgba(27,229,0,0.06)', border: '1px solid rgba(27,229,0,0.2)', borderRadius: 12, padding: '12px 14px' }}>
+                  <p style={{ fontSize: 12, color: 'var(--text)', margin: '0 0 10px' }}>
+                    Confirm you received <strong>{Number(checkout.stablecoinAmount).toFixed(2)} {checkout.token}</strong> from the customer?
+                  </p>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button
+                      className="button primary"
+                      style={{ flex: 1, fontSize: 12 }}
+                      disabled={confirming}
+                      onClick={async () => {
+                        setConfirming(true);
+                        try {
+                          await handleConfirmed(checkoutRef.current ?? checkout, randomHash());
+                        } catch (err) {
+                          setStatus(err.message || 'Confirmation failed');
+                          setConfirmPrompt(false);
+                        } finally {
+                          setConfirming(false);
+                        }
+                      }}
+                    >
+                      {confirming ? 'Confirming…' : 'Yes, confirm'}
+                    </button>
+                    <button
+                      className="button ghost"
+                      style={{ flex: 1, fontSize: 12 }}
+                      onClick={() => setConfirmPrompt(false)}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )
             )}
           </article>
 

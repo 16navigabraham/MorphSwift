@@ -86,8 +86,8 @@ export async function createAuthSession({ walletAddress, email, displayName, pro
     merchant.displayName = displayName?.trim() || merchant.displayName;
     merchant.walletAddress = merchant.walletAddress ?? identity;
     merchant.email = merchant.email ?? identity;
-    // Upgrade existing merchants that still have a pseudo wallet
-    if (!merchant.payoutWallet || !merchant.payoutWallet.startsWith('0x') || merchant.payoutWallet.length < 40) {
+    // Keep pseudo payout wallet — it provides privacy by not exposing the real wallet address
+    if (!merchant.payoutWallet) {
       merchant.payoutWallet = resolvedPayoutWallet;
     }
     await updateMerchant(merchant);
