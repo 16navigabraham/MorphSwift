@@ -35,9 +35,12 @@ export async function updateMerchantById(request, response, next) {
       return response.status(404).json({ message: 'Merchant not found' });
     }
 
-    const { displayName } = request.body;
+    const { displayName, payoutWallet } = request.body;
     if (displayName !== undefined) {
       merchant.displayName = displayName;
+    }
+    if (payoutWallet !== undefined) {
+      merchant.payoutWallet = payoutWallet;
     }
 
     await updateMerchant(merchant);

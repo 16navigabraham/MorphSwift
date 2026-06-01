@@ -90,9 +90,9 @@ export async function createAuthSession({ walletAddress, email, displayName, pro
     }
     merchant.walletAddress = merchant.walletAddress ?? identity;
     merchant.email = merchant.email ?? identity;
-    // Keep pseudo payout wallet — it provides privacy by not exposing the real wallet address
-    if (!merchant.payoutWallet) {
-      merchant.payoutWallet = resolvedPayoutWallet;
+    // Always use real wallet address for payout
+    if (!merchant.payoutWallet && isWalletAddress) {
+      merchant.payoutWallet = identity;
     }
     await updateMerchant(merchant);
   } else {
@@ -105,7 +105,7 @@ export async function createAuthSession({ walletAddress, email, displayName, pro
       status: 'active',
       balance: 0,
       currency: 'USDC',
-      payoutWallet: resolvedPayoutWallet,
+      payoutWallet: isWalletAddress ? identity : null,
       createdAt: new Date().toISOString(),
       lastLoginAt: new Date().toISOString(),
     };

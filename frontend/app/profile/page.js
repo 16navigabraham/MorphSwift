@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { CONFIG } from '../../config.js';
 import { getSession, saveSession } from '../../assets/js/magic.js';
 import { updateMerchantPayoutWallet } from '../../assets/js/gatewayContract.js';
-import { getSigner } from '../../assets/js/wallet.js';
+import { getSigner, ensureCorrectNetwork } from '../../assets/js/wallet.js';
 import WalletConnect from '../components/WalletConnect';
 
 export default function ProfilePage() {
@@ -37,11 +37,21 @@ export default function ProfilePage() {
     setMessage('');
 
     try {
-      // Update server-side merchant
+      const signer = await getSigner();
+      if (!signer) throw new Error('Wallet not connected');
+      const connectedAddress = await signer.getAddress();
+
+      // Ensure correct network
+      await ensureCorrectNetwork(CONFIG.contract.chainId);
+
+      // Update server-side merchant with display name and payout wallet
       const res = await fetch('/api/merchants/' + merchant.id, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ displayName: displayName.trim() }),
+        body: JSON.stringify({
+          displayName: displayName.trim(),
+          payoutWallet: connectedAddress,
+        }),
       });
 
       if (!res.ok) {
@@ -49,11 +59,14 @@ export default function ProfilePage() {
         throw new Error(err.message || 'Profile update failed');
       }
 
+      // Update payout wallet on-chain
+      await updateMerchantPayoutWallet(signer, connectedAddress);
+
       // Update local session
-      const updated = { ...merchant, displayName: displayName.trim() };
+      const updated = { ...merchant, displayName: displayName.trim(), payoutWallet: connectedAddress };
       saveSession({ ...getSession(), merchant: updated });
       setMerchant(updated);
-      setMessage('✓ Profile updated');
+      setMessage('✓ Profile and payout wallet updated');
     } catch (err) {
       setMessage(err.message || 'Error updating profile');
     } finally {
