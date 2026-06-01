@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { CONFIG } from '../../config.js';
 import { createWithdrawal, estimateNet } from '../../assets/js/withdraw.js';
 import { computeStats, fetchLedger, loadLocalHistory, mergeTransactions, downloadCsv, mapApiTransaction } from '../../assets/js/ledger.js';
-import { getMerchantId } from '../../assets/js/magic.js';
+import { getMerchantId, getSession, loginWithWallet, saveSession } from '../../assets/js/magic.js';
 
 function dateKey(iso) {
   const d = new Date(iso);
@@ -47,12 +47,26 @@ export default function LedgerPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const id = getMerchantId();
-    if (!id) {
+    const session = getSession();
+    if (!session.merchant) {
       router.replace('/onboarding');
       return;
     }
-    setMerchantId(id);
+    // Re-authenticate to ensure merchant exists in server DB after any restart
+    const walletAddress = session.merchant.walletAddress || session.merchant.email;
+    if (walletAddress) {
+      loginWithWallet(walletAddress)
+        .then((freshSession) => {
+          saveSession(freshSession);
+          setMerchantId(freshSession.merchant.id);
+        })
+        .catch(() => {
+          // fallback to cached id if re-auth fails
+          setMerchantId(session.merchant.id);
+        });
+    } else {
+      setMerchantId(session.merchant.id);
+    }
   }, [router]);
 
   useEffect(() => {
@@ -60,7 +74,6 @@ export default function LedgerPage() {
     let alive = true;
 
     (async () => {
-      const apiLedger = await fetchLedger(merchantId, 100);
       const localHistory = loadLocalHistory().map((entry) => ({
         id: entry.id,
         timestamp: entry.timestamp,
@@ -72,6 +85,13 @@ export default function LedgerPage() {
         status: entry.status ?? 'confirmed',
         hash: entry.hash ?? entry.txHash ?? '',
       }));
+
+      let apiLedger = null;
+      try {
+        apiLedger = await fetchLedger(merchantId, 100);
+      } catch {
+        // Server unreachable or merchant not found — show local history only
+      }
 
       const apiTransactions = (apiLedger?.transactions ?? []).map(mapApiTransaction);
       const merged = mergeTransactions(apiTransactions, localHistory);
@@ -85,9 +105,7 @@ export default function LedgerPage() {
       setTodayRev(stats.todayRev);
       setTodayCount(stats.todayCount);
       setWeekRev(stats.weekRev);
-    })().catch((error) => {
-      alert(error.message || 'Unable to load ledger');
-    });
+    })();
 
     return () => {
       alive = false;

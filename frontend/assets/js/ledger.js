@@ -40,11 +40,17 @@ export function mapApiTransaction(tx) {
   };
 }
 
+function fetchWithTimeout(url, options = {}, ms = 8000) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), ms);
+  return fetch(url, { ...options, signal: ctrl.signal }).finally(() => clearTimeout(t));
+}
+
 export async function fetchLedger(merchantId, limit = 50) {
   const id = merchantId ?? getMerchantId();
   if (!id) return null;
 
-  const res = await fetch(apiUrl(`merchants/${id}/ledger?limit=${limit}`));
+  const res = await fetchWithTimeout(apiUrl(`merchants/${id}/ledger?limit=${limit}`));
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.message ?? `Ledger fetch failed (${res.status})`);

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { CONFIG } from '../../config.js';
 import { createCheckout, confirmCheckout } from '../../assets/js/chainListener.js';
 import { buildPaymentUri, shortAddress } from '../../assets/js/qrPayload.js';
-import { getSession } from '../../assets/js/magic.js';
+import { getSession, loginWithWallet, saveSession } from '../../assets/js/magic.js';
 import { saveLocalTransaction } from '../../assets/js/ledger.js';
 import {
   createCheckoutOnChain,
@@ -89,9 +89,25 @@ export default function CheckoutPage() {
     let alive = true;
 
     (async () => {
+      // 0. Re-authenticate to ensure merchant exists in server DB.
+      //    The server DB may be fresh (restart/ephemeral disk) while the
+      //    browser still holds a stale merchantId in localStorage.
+      let activeMerchant = context.merchant;
+      const walletAddress = activeMerchant.walletAddress || activeMerchant.email;
+      if (walletAddress) {
+        try {
+          const session = await loginWithWallet(walletAddress);
+          saveSession(session);
+          activeMerchant = session.merchant;
+          setMerchant(activeMerchant);
+        } catch {
+          // non-fatal — proceed with cached merchant, will fail later if truly missing
+        }
+      }
+
       // 1. Create checkout on the server
       const created = await createCheckout({
-        merchantId: context.merchant.id,
+        merchantId: activeMerchant.id,
         amountFiat: Number(context.amount),
         currency: context.currency,
         token: 'USDC',

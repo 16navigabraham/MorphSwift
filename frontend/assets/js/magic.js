@@ -1,7 +1,13 @@
 import { apiUrl, CONFIG } from '../../config.js';
 
+function fetchWithTimeout(url, options = {}, ms = 8000) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), ms);
+  return fetch(url, { ...options, signal: ctrl.signal }).finally(() => clearTimeout(t));
+}
+
 export async function createSession({ walletAddress, displayName, provider = 'wallet-connect' }) {
-  const res = await fetch(apiUrl('auth/session'), {
+  const res = await fetchWithTimeout(apiUrl('auth/session'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ walletAddress, displayName, provider }),
