@@ -121,19 +121,19 @@ export default function CheckoutPage() {
       let resolvedOnChainId = null;
       if (hasInjectedProvider()) {
         try {
-          setContractPhase('Creating on-chain checkout…');
           const signer = await getSigner();
           if (signer) {
+            setContractPhase('Check MetaMask — approve registration if prompted…');
             const { onChainCheckoutId } = await createCheckoutOnChain(signer, {
               serverCheckoutId: created.id,
               stablecoinAmount: created.stablecoinAmount,
             });
             resolvedOnChainId = onChainCheckoutId;
             setOnChainId(onChainCheckoutId);
-            setContractPhase('On-chain checkout registered.');
+            setContractPhase('On-chain checkout active.');
           }
         } catch (err) {
-          setContractPhase(`On-chain skipped: ${err.message}`);
+          setContractPhase(`On-chain unavailable: ${err.shortMessage || err.message}`);
         }
       }
 

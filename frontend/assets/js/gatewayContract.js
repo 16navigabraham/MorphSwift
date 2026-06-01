@@ -80,6 +80,19 @@ export async function createCheckoutOnChain(signer, {
   const contract = await gatewayContract(signer);
   const merchantId = await deriveMerchantId(address);
 
+  // Auto-register if not on-chain yet (covers cases where onboarding tx was missed)
+  try {
+    await contract.getMerchant(merchantId);
+  } catch {
+    const tx = await contract.registerMerchant(
+      merchantId,
+      address,
+      ethers.ZeroHash,
+      0,
+    );
+    await tx.wait();
+  }
+
   // Deterministic orderRef from the server checkout ID
   const orderRef = ethers.keccak256(ethers.toUtf8Bytes(`morphswift:${serverCheckoutId}`));
   const onChainCheckoutId = await deriveCheckoutId(merchantId, orderRef);
