@@ -11,7 +11,8 @@ import {
   quoteStablecoin,
   loadPriceSettings,
 } from '../../assets/js/priceFeeds.js';
-import { fetchOnChainBalances } from '../../assets/js/gatewayContract.js';
+import { fetchOnChainBalances, updateMerchantPayoutWallet, deriveMerchantId } from '../../assets/js/gatewayContract.js';
+import { getSigner } from '../../assets/js/wallet.js';
 import WalletConnect from '../components/WalletConnect';
 import TokenLogo from '../components/TokenLogo';
 
@@ -41,6 +42,7 @@ function TerminalContent() {
   const [onChainBalance, setOnChainBalance] = useState({ usdc: null, usdt: null });
   const [error, setError] = useState('');
   const [charging, setCharging] = useState(false);
+  const [fixingPayoutWallet, setFixingPayoutWallet] = useState(false);
   const rawRef = useRef(raw);
   rawRef.current = raw;
 
@@ -132,7 +134,26 @@ function TerminalContent() {
     }
   }
 
+  const fixPayoutWallet = async () => {
+    try {
+      setFixingPayoutWallet(true);
+      const signer = await getSigner();
+      if (!signer) throw new Error('Wallet not connected');
+      const address = await signer.getAddress();
+      await updateMerchantPayoutWallet(signer, address);
+      setFixingPayoutWallet(false);
+      alert('✓ Payout wallet updated to your connected address on-chain');
+    } catch (err) {
+      setFixingPayoutWallet(false);
+      alert(`Error fixing payout wallet: ${err.message}`);
+    }
+  };
+
   const presets = PRESETS[currency] ?? [];
+
+  // Check if payout wallet mismatch exists
+  const payoutMismatch = merchant?.payoutWallet && merchant?.walletAddress &&
+                         merchant.payoutWallet !== merchant.walletAddress;
 
   return (
     <main className="app-shell">
@@ -144,6 +165,9 @@ function TerminalContent() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <Link href="/ledger" className="ghost-btn" style={{ padding: '6px 10px', fontSize: 11 }}>
             Ledger
+          </Link>
+          <Link href="/profile" className="ghost-btn" style={{ padding: '6px 10px', fontSize: 11 }}>
+            Profile
           </Link>
           <div className="merchant-pill">
             <span className="merchant-avatar">{merchantInitials(merchant)}</span>
@@ -243,6 +267,25 @@ function TerminalContent() {
 
         {/* Desktop sidebar */}
         <aside className="terminal-sidebar">
+          {/* Payout wallet mismatch warning */}
+          {payoutMismatch && (
+            <div style={{ background: 'rgba(226,175,74,0.1)', border: '1px solid rgba(226,175,74,0.3)', borderRadius: 12, padding: '10px 12px', marginBottom: 12 }}>
+              <p style={{ fontSize: 11, color: 'var(--amber)', margin: '0 0 8px', fontWeight: 600 }}>
+                Payout wallet mismatch detected
+              </p>
+              <p style={{ fontSize: 10, color: 'var(--muted)', margin: '0 0 10px' }}>
+                Funds are being sent to an old address. Click below to fix.
+              </p>
+              <button
+                style={{ width: '100%', padding: '8px 12px', borderRadius: 8, background: 'var(--amber)', color: '#0b0b0d', border: 'none', fontWeight: 700, fontSize: 11, cursor: 'pointer' }}
+                onClick={fixPayoutWallet}
+                disabled={fixingPayoutWallet}
+              >
+                {fixingPayoutWallet ? 'Fixing…' : 'Fix payout wallet'}
+              </button>
+            </div>
+          )}
+
           {/* On-chain wallet balance */}
           <div className="card">
             <p className="section-label">Wallet balance</p>

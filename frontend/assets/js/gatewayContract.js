@@ -65,6 +65,30 @@ export async function registerMerchantOnChain(signer) {
   return { merchantId, alreadyRegistered: false, txHash: receipt.hash };
 }
 
+/**
+ * Update the merchant's on-chain payout wallet.
+ * Only the merchant operator can call this.
+ * Used to fix registrations with incorrect payout wallet.
+ */
+export async function updateMerchantPayoutWallet(signer, newPayoutWallet) {
+  const address = await signer.getAddress();
+  const contract = await gatewayContract(signer);
+  const merchantId = await deriveMerchantId(address);
+
+  // Fetch current merchant data to preserve other fields
+  const current = await contract.getMerchant(merchantId);
+
+  const tx = await contract.updateMerchant(
+    merchantId,
+    newPayoutWallet,      // The corrected payout wallet
+    current.active,       // Keep current active status
+    current.metadataHash, // Keep current metadata
+    current.feeBps,       // Keep current fees
+  );
+  const receipt = await tx.wait();
+  return { merchantId, newPayoutWallet, txHash: receipt.hash };
+}
+
 // ─── checkout creation ───────────────────────────────────────────────────────
 
 /**

@@ -1,4 +1,4 @@
-import { getMerchant, listMerchantLedger, listMerchants } from '../services/morphService.js';
+import { getMerchant, listMerchantLedger, listMerchants, updateMerchant } from '../services/morphService.js';
 
 export async function getMerchantById(request, response, next) {
   try {
@@ -23,6 +23,25 @@ export async function getMerchantLedger(request, response, next) {
     const limit = request.query.limit ? Number(request.query.limit) : 20;
     const ledger = await listMerchantLedger(request.params.merchantId, limit);
     response.status(200).json(ledger);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function updateMerchantById(request, response, next) {
+  try {
+    const merchant = await getMerchant(request.params.merchantId);
+    if (!merchant) {
+      return response.status(404).json({ message: 'Merchant not found' });
+    }
+
+    const { displayName } = request.body;
+    if (displayName !== undefined) {
+      merchant.displayName = displayName;
+    }
+
+    await updateMerchant(merchant);
+    response.status(200).json(merchant);
   } catch (error) {
     next(error);
   }

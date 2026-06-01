@@ -6,6 +6,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { CONFIG } from '../../config.js';
 import { fetchCheckout, confirmCheckout } from '../../assets/js/chainListener.js';
 import { buildPaymentUri, shortAddress } from '../../assets/js/qrPayload.js';
+import { buildPayCheckoutUri } from '../../assets/js/gatewayContract.js';
 import { connectWallet, ensureCorrectNetwork, hasInjectedProvider } from '../../assets/js/wallet.js';
 import TokenLogo from '../components/TokenLogo';
 import { ethers } from 'ethers';
@@ -104,14 +105,26 @@ function PayContent() {
   }
 
   const fiatSymbol = CONFIG.currencySymbols[checkout?.currency] ?? (checkout?.currency ?? '');
-  const walletUri = checkout
-    ? buildPaymentUri({
+
+  // Smart QR: wallet-scannable URI or web link
+  let walletUri = '';
+  let qrLabel = '';
+  if (checkout) {
+    if (checkout.onChainCheckoutId) {
+      // Gateway path: wallet can scan this ethereum: call directly
+      walletUri = buildPayCheckoutUri(checkout.onChainCheckoutId);
+      qrLabel = 'Scan with your wallet app';
+    } else {
+      // Direct transfer: wallet can scan to send USDC manually
+      walletUri = buildPaymentUri({
         address: checkout.payoutWallet || checkout.merchantId,
         amount: checkout.stablecoinAmount,
         token: checkout.token,
         network: checkout.network || CONFIG.settlementNetwork,
-      })
-    : '';
+      });
+      qrLabel = 'Or scan with wallet to send manually';
+    }
+  }
 
   const hasWallet = hasInjectedProvider();
   const onMobile = isMobile();
@@ -240,7 +253,7 @@ function PayContent() {
               {/* Option C: mobile — QR for wallet app */}
               {onMobile && (
                 <div style={{ textAlign: 'center', marginBottom: 14 }}>
-                  <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 10 }}>Scan with your wallet app</p>
+                  <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 10 }}>{qrLabel}</p>
                   <div style={{ display: 'inline-block', background: '#fff', padding: 12, borderRadius: 14 }}>
                     <QRCodeSVG value={walletUri} size={180} level="H" />
                   </div>

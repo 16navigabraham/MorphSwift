@@ -287,7 +287,7 @@ export default function LedgerPage() {
         <article className="summary-card">
             <p className="section-label">Transactions</p>
             <div className="filter-row">
-              {['all', 'confirmed', 'pending', 'failed'].map((item) => (
+              {['all', 'confirmed'].map((item) => (
                 <button key={item} className={`filter-tab ${filter === item ? 'active' : ''}`} onClick={() => setFilter(item)}>
                   {item}
                 </button>
